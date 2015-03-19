@@ -4,7 +4,7 @@ using namespace std;
 
 //this class defines an advertiser Node
 class advNode {
-	int channelOffset;	//channel used to advertise
+	int usedChannel;	//channel used to advertise
 	int availableChannels;	//channels available
 	bool state;			//state of the advertiser node (active or not)
 	
