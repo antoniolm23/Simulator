@@ -4,10 +4,8 @@
 //#include "Node.h"
 #include "Stats.h"
 #include "strings.h"
-#include "Random.h"
+//#include "Random.h"
 #include "Timeslot.h"
-
-#define N 4	//number of slots in slotframe
 
 /*
  * parameters to be passed to main:
@@ -58,6 +56,7 @@ int main(int argc, char **argv)
 	
 	//create a general class from which random numbers will be extracted
 	Random r;
+	r.init();
 	
 	//create list of advertisers
 	list<advNode> advNodes;
@@ -67,18 +66,24 @@ int main(int argc, char **argv)
 	
 	for(int j = 0; j < iterations; j++)
 	{
-		int advStartingChannel = r.getNumber(advChannels);
+		
+		/*
+		 * FIXME FOR NOW static link equal for all required nodes
+		 */
+		int channelOffset = 0;
+		int timeslot = 0;
 		
 		//create as many advertisers as needed and then put them in the list
 		for(int i = 0; i < advertisers; i++ ) 
 		{
-			advNode tmp = advNode( (advStartingChannel + i) % advChannels, advChannels );
+			advNode tmp = advNode( advChannels );
+			tmp.insertLink(channelOffset, timeslot);
 			advNodes.push_back(tmp);
 		}
 		
 		int listenerChannel = r.getNumber(listChannels);
 		
-		Timeslot t;
+		Timeslot t = Timeslot(r);
 		
 		//add the listener
 		t.addListener(listenerChannel);
@@ -94,47 +99,10 @@ int main(int argc, char **argv)
 				t.addNode(*it);
 			}
 			
-			int frameSlotNumber = 1;
-			
-			//prints the actual timeslot
-			t.print();
-			
-			/*
-			* until both listener and at least one of the advertiser share the same channel
-			* the advertisers iterate through channels
-			*/
-			while(t.compareChannel() == false) 
-			{
-				frameSlotNumber++;
-				t.changeChannel();
-				t.print();
-			}
+			int frameSlotNumber = t.timeslotManager(method);
 			
 			//now it's possible to compute statistics
 			s.statInsert(frameSlotNumber);
-		}
-		
-		//STAGGERED, as many timeslot in a timeframe as the number of nodes
-		if(method == 2)
-		{
-			int timeslot = 1;
-			bool found = false;
-			while(found == false) 
-			{
-				
-				for(list<advNode>::iterator it = advNodes.begin(); it != advNodes.end(); ++it) 
-				{
-					t.addNode(*it);
-					if(t.compareChannel() == true) 
-					{
-						found = true;
-						s.statInsert(timeslot);
-						break;
-					}
-					it->changeChannel();
-				}
-				t.erase();
-			}
 		}
 		
 		//delete all the lists

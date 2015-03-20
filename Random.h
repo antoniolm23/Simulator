@@ -5,6 +5,6 @@ using namespace std;
 
 class Random{
 public:
-	Random();
+	void init();
 	int getNumber(int m);
 };

@@ -21,11 +21,13 @@ class advNode {
 	list<advLink> advertisingLinks;	//list of links used to do advertising
 	int availableChannels;	//channels available
 	bool state;			//state of the advertiser node (active or not)
+	int absoluteChannel;
 public:
 	advNode(int ac);
-	int getUsedChannel();
-	int getState();
+	int getUsedChannel(int);
+	int getState(int);
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
-	int generateNumber(int, Random);	
+	int generateNumber(int, Random);
+	int getAbsoluteChannel() { return absoluteChannel; }
 };

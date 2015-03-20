@@ -1,5 +1,4 @@
 #include "Node.h"
-#include "Random.h"
 
 advNode::advNode(int tc) 
 {
@@ -24,6 +23,7 @@ int advNode::getUsedChannel(int asn)
 	//getState returns the channelOffset if node has a link in that timeslot, -1 otherwise
 	if((chOff = getState(timeslot)) != -1) {
 		int usedChannel = CHSTART + ((asn + chOff) % availableChannels);
+		absoluteChannel = usedChannel;
 		return usedChannel;
 	}
 	

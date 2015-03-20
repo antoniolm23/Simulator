@@ -10,8 +10,9 @@ class Timeslot{
 	int asn;	//absolute Sequence Number
 	Random rand;
 	
+	bool solveCollisions();
 	void eraseActive();	//erase the list of active nodes
-	void insertActive(advNode a); //inserts active nodes in the list
+	void insertActive(int); //inserts active nodes in the list
 public:
 	Timeslot(Random r) { asn = 0; rand = r;}
 	void addNode(advNode a);
@@ -20,5 +21,5 @@ public:
 	void addListener(int l);
 	void changeChannel();
 	void erase();
-	void timeslotManager();
+	int timeslotManager(int);
 };

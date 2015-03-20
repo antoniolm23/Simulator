@@ -1,7 +1,7 @@
 #include "Random.h"
 
 
-Random::Random()
+void Random::init()
 {
 	srand(time(NULL));
 }

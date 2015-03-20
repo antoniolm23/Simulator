@@ -32,7 +32,7 @@ void Stat::print()
 	
 	for(list<statElem>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
-		myfile<<"timeslotNumber\t"<<it->timeslotNumber<<"\tfrequency:\t"<<it->frequency<<endl; 
+		myfile<<"FrameslotNumber\t"<<it->timeslotNumber<<"\tfrequency:\t"<<it->frequency<<endl; 
 	}
 	myfile.close();
 }
