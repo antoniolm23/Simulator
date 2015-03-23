@@ -47,9 +47,9 @@ void Timeslot::print()
 	cout<<listener<<endl;
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
-		cout<<'\t'<<it->getAbsoluteChannel();
+		cout<<'\t'<<it->getNodeID()<<' '<<it->getAbsoluteChannel();
 	}
-	//cout<<endl<<"**************************************"<<endl;
+	cout<<endl<<"**************************************"<<endl;
 }
 
 //delete all the list
@@ -63,6 +63,7 @@ void Timeslot::eraseActive()
 	activeNode.erase(activeNode.begin(), activeNode.end());
 }
 
+//find if the max value available (size-1) is present in the list 
 int findMax(int* v, int size) 
 {
 	int max = size - 1;
@@ -110,16 +111,20 @@ bool Timeslot::solveCollisions()
 	//check if the same channel is used by more than one node
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
+		//if the channel is not already in the list then push it in the list
 		if(!find(tmpChannel, it->getAbsoluteChannel())) {
 			tmpChannel.push_back(it -> getAbsoluteChannel());
 			for( list<advNode>::iterator jt = it; jt != activeNode.end(); ++jt ) 
 			{
+				//find how many nodes use the same channel
 				if(find(tmpChannel, jt -> getAbsoluteChannel())) 
 				{
 					usedBy++;
 					colliding.push_back(*jt);
 				}
 			}
+			
+			//if more than one node use the same channel then manage collisions
 			if(colliding.size() > 1) 
 			{
 				int size = colliding.size();
@@ -127,6 +132,8 @@ bool Timeslot::solveCollisions()
 				int* genNumbers = new int[size];
 				int i = 0;
 				//cout<<"generatedNumbers:";
+				
+				//let each node generate a random number to handle collision
 				for( list<advNode>::iterator at = colliding.begin(); at != colliding.end(); ++at ) {
 					genNumbers[i] = at -> generateNumber(size, rand);
 					//cout<<genNumbers[i]<<'\t';
@@ -134,8 +141,10 @@ bool Timeslot::solveCollisions()
 				}
 				//cout<<endl;
 				
+				//erase all the list of colliding nodes to save resources
 				colliding.erase(colliding.begin(), colliding.end());
 				//cout<<"result is: "<<findMax(genNumbers, size);
+				//see if the collision is solved or not
 				if(findMax(genNumbers, size)) 
 					collisionSolved = true;
 				else 
@@ -163,32 +172,71 @@ bool Timeslot::solveCollisions()
  */
 int Timeslot::timeslotManager(int method)
 {
+	
 	bool matchFound = false;
 	char t;
+	
+	int timeslotOn = 0;
+	/*
+	* In the STAGGERED schema, a node becomes active at a certain point 
+	* and it waits until the first EB is received correctly ALWAYS ON and
+	* ON THE SAME CHANNEL 
+	*/
+	if(method == STAGGERED)
+	{
+		/*
+		* N is the number of timeslots, listenerChannels is the number of channels
+		* available to the listener
+		*/
+		timeslotOn = rand.getNumber( N * listenerChannels ) + 1;
+		
+		//cout<<"timeslotOn: "<<timeslotOn<<endl;
+		
+		//increment the asn, 
+		while(asn < timeslotOn)
+			asn++;
+	}
+	
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
+		
+		//insert active nodes in the list of active nodes
 		insertActive(asn);
 		
 		//print the list of active channels
 		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
 		//print();
 		
+		/*
+		 * In the fixed schema the listener becomes active at the first slot
+		 * and remain active until a match is found
+		 */
 		bool collisionSolved = solveCollisions();
 		
+		/*
+		* if listener and advertiser use the same channel and 
+		* there are no collisions then the match is found
+		*/
 		if(compareChannel() && collisionSolved)  
 		{
 			matchFound = true;
 		}
 		eraseActive();
 		asn++;
+		
 	}
 	
-	if(method == 1) 
+	//if the method is fixed then the measure is performed in slotframe 
+	if(method == FIXEDSCHEMA) 
 	{
 		int ratio = (asn / N) + 1;
 		return ratio;
 	}
 		
 	else
-		return asn;
+	{
+		int ret = asn - timeslotOn;
+		//cout<<"return value: "<<ret<<endl; 
+		return ret;
+	}
 }

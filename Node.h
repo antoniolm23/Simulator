@@ -22,6 +22,7 @@ class advNode {
 	int availableChannels;	//channels available
 	bool state;			//state of the advertiser node (active or not)
 	int absoluteChannel;
+	int nodeId;
 public:
 	advNode(int ac);
 	int getUsedChannel(int);
@@ -30,4 +31,6 @@ public:
 	void insertLink(int chOff, int ts);
 	int generateNumber(int, Random);
 	int getAbsoluteChannel() { return absoluteChannel; }
+	void setNodeID(int id) { nodeId = id; }
+	int getNodeID() { return nodeId; }
 };

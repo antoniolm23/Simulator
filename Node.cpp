@@ -49,7 +49,12 @@ int advNode::getState(int timeslot)
 	for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it) 
 	{
 		if(it -> timeslot == timeslot)
+		{
+			//cout<<"active "<<nodeId<<endl;
 			return it->channelOffset;
+		}
+		/*else
+			cout<<"inactive "<<nodeId<<endl;*/
 	}
 	
 	return -1;
@@ -65,6 +70,8 @@ void advNode::insertLink(int chOff, int ts)
 	advLink aL;
 	aL.channelOffset = chOff;
 	aL.timeslot = ts;
+	
+	cout<<nodeId<<" insert: "<<aL.channelOffset<<aL.timeslot<<endl;
 	
 	//insert in the list
 	advertisingLinks.push_back(aL);

@@ -6,6 +6,7 @@
 #include "strings.h"
 //#include "Random.h"
 #include "Timeslot.h"
+#include "parameters.h"
 
 /*
  * parameters to be passed to main:
@@ -54,6 +55,8 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	cout<<advChannels<<endl;
+	
 	//create a general class from which random numbers will be extracted
 	Random r;
 	r.init();
@@ -63,52 +66,71 @@ int main(int argc, char **argv)
 	
 	//list of statistics
 	Stat s;
+	/***Parameter setting***/
+	string filename = "conf.txt";
+	parsing p = parsing(filename);
+	p.doParsing();
 	
+	int id = -1;
+	
+	//create as many advertisers as needed and then put them in the list
+	while(p.getParameterSize() > 0) 
+	{
+		//each node has its own id
+		advNode tmp = advNode( advChannels );
+		
+		parameter pa = p.getParameter();
+		
+		/*
+			* NOTE: By assumption in the file IDs are ordered
+			* assign to eaxh node as many links as declared into the file
+			*/
+		if(id != pa.nodeID) 
+		{
+			tmp.setNodeID(pa.nodeID);
+		}
+		
+		tmp.insertLink(pa.chOff, pa.timeslot);
+		
+		while(id == pa.nodeID && p.getParameterSize() > 0)
+		{
+			pa = p.getParameter();
+			tmp.insertLink(pa.chOff, pa.timeslot);
+		}
+		
+		
+		//cout<<pa.nodeID<<pa.chOff<<pa.timeslot<<endl;
+		id = pa.nodeID;
+		
+		advNodes.push_back(tmp);
+		
+	}
+		
 	for(int j = 0; j < iterations; j++)
 	{
 		
-		/*
-		 * FIXME FOR NOW static link equal for all required nodes
-		 */
-		int channelOffset = 0;
-		int timeslot = 0;
-		
-		//create as many advertisers as needed and then put them in the list
-		for(int i = 0; i < advertisers; i++ ) 
-		{
-			advNode tmp = advNode( advChannels );
-			tmp.insertLink(channelOffset, timeslot);
-			advNodes.push_back(tmp);
-		}
-		
 		int listenerChannel = r.getNumber(listChannels);
 		
-		Timeslot t = Timeslot(r);
+		Timeslot t = Timeslot(r, listChannels);
 		
 		//add the listener
 		t.addListener(listenerChannel);
 		
-		/*
-		* METHOD FIXED: First Timeslot of each Frameslot with all nodes
-		*/
-		if(method == 1)
+		//build the list of advertisers
+		for( list<advNode>::iterator it = advNodes.begin(); it != advNodes.end(); ++it  )
 		{
-			//build the list of advertisers
-			for( list<advNode>::iterator it = advNodes.begin(); it != advNodes.end(); ++it  )
-			{
-				t.addNode(*it);
-			}
-			
-			int frameSlotNumber = t.timeslotManager(method);
-			
-			//now it's possible to compute statistics
-			s.statInsert(frameSlotNumber);
+			t.addNode(*it);
 		}
 		
+		int frameSlotNumber = t.timeslotManager(method);
+		
+		//now it's possible to compute statistics
+		s.statInsert(frameSlotNumber);
+		
 		//delete all the lists
-		advNodes.erase(advNodes.begin(), advNodes.end());
 		t.erase();
 	}
+	advNodes.erase(advNodes.begin(), advNodes.end());
 	s.print();
 	
     return 0;
