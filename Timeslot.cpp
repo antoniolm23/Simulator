@@ -106,15 +106,16 @@ bool Timeslot::solveCollisions()
 	list<int> tmpChannel;
 	list<advNode> colliding;
 	
-	bool collisionSolved;
+	bool collisionSolved = true;
 	
 	//check if the same channel is used by more than one node
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
+		
 		//if the channel is not already in the list then push it in the list
 		if(!find(tmpChannel, it->getAbsoluteChannel())) {
 			tmpChannel.push_back(it -> getAbsoluteChannel());
-			for( list<advNode>::iterator jt = it; jt != activeNode.end(); ++jt ) 
+			for( list<advNode>::iterator jt = it; jt != activeNode.end() ; ++jt ) 
 			{
 				//find how many nodes use the same channel
 				if(find(tmpChannel, jt -> getAbsoluteChannel())) 
@@ -128,7 +129,7 @@ bool Timeslot::solveCollisions()
 			if(colliding.size() > 1) 
 			{
 				int size = colliding.size();
-				//cout<<"size is: "<<size<<endl;
+				cout<<"size is: "<<size<<endl;
 				int* genNumbers = new int[size];
 				int i = 0;
 				//cout<<"generatedNumbers:";
@@ -141,8 +142,6 @@ bool Timeslot::solveCollisions()
 				}
 				//cout<<endl;
 				
-				//erase all the list of colliding nodes to save resources
-				colliding.erase(colliding.begin(), colliding.end());
 				//cout<<"result is: "<<findMax(genNumbers, size);
 				//see if the collision is solved or not
 				if(findMax(genNumbers, size)) 
@@ -153,6 +152,8 @@ bool Timeslot::solveCollisions()
 				}
 				delete genNumbers;
 			}
+			//erase all the list of colliding nodes to save resources
+			colliding.erase(colliding.begin(), colliding.end());
 		}
 	}
 	tmpChannel.erase(tmpChannel.begin(), tmpChannel.end());
