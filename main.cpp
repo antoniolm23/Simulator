@@ -15,6 +15,7 @@
  * -c channel of advertiser, predefined 16
  * -l channel of listener, predefined 16
  * -m method, predefined fixed
+ * -s schema used e.g. A0C1 
  */
 
 int main(int argc, char **argv) 
@@ -28,9 +29,10 @@ int main(int argc, char **argv)
 	int advChannels = 16;
 	int listChannels = 16;
 	int method = 1;
+	string sTmp = "";
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:m:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:m:s:")) != -1) 
 	{
 		switch(c)
 		{
@@ -48,6 +50,9 @@ int main(int argc, char **argv)
 				break;
 			case 'm':
 				method = atoi(optarg);
+				break;
+			case 's':
+				sTmp = optarg;
 				break;
 			case '?':
 				cout<<optarg<<endl;
@@ -131,7 +136,7 @@ int main(int argc, char **argv)
 		t.erase();
 	}
 	advNodes.erase(advNodes.begin(), advNodes.end());
-	s.print();
+	s.print(sTmp);
 	
     return 0;
 }

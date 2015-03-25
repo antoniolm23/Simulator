@@ -14,9 +14,11 @@ struct statElem
 
 class Stat
 {
-	list<statElem> statsList; 
+	list<statElem> statsList;
+	double computeStatistic();
 public:
 	Stat() {};
 	void statInsert(int tsn);
 	void print();
+	void print(string t);
 };

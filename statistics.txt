@@ -127,6 +127,7 @@ FrameslotNumber	7	frequency:	65659
 FrameslotNumber	2	frequency:	133452
 FrameslotNumber	4	frequency:	133329
 FrameslotNumber	9	frequency:	66772
+
 FrameslotNumber	4	frequency:	66279
 FrameslotNumber	3	frequency:	133645
 FrameslotNumber	8	frequency:	67035
@@ -139,3 +140,45 @@ FrameslotNumber	1	frequency:	133265
 FrameslotNumber	11	frequency:	66368
 FrameslotNumber	12	frequency:	66622
 FrameslotNumber	6	frequency:	66702
+
+
+
+
+
+
+
+
+A0C4
+
+FrameslotNumber	3	frequency:	133547
+FrameslotNumber	2	frequency:	133551
+FrameslotNumber	1	frequency:	133124
+FrameslotNumber	11	frequency:	67006
+FrameslotNumber	10	frequency:	66877
+FrameslotNumber	7	frequency:	66686
+FrameslotNumber	9	frequency:	66993
+FrameslotNumber	8	frequency:	66771
+FrameslotNumber	6	frequency:	66463
+FrameslotNumber	4	frequency:	132182
+FrameslotNumber	5	frequency:	66800
+
+
+Statistics
+
+
+A0A1: Average joining time: 4.40017
+A0A2: Average joining time: 5.60156
+A0A3: Average joining time: 5.59438
+A0A4: Average joining time: 4.40392
+A0B0: Average joining time: 4.66471
+A0B1: Average joining time: 5.06369
+A0B2: Average joining time: 6.26636
+A0B3: Average joining time: 4.26429
+A0B4: Average joining time: 7.06597
+A0C0: Average joining time: 4.67322
+A0C1: Average joining time: 7.06082
+A0C2: Average joining time: 4.26661
+A0C3: Average joining time: 6.26488
+A0C4: Average joining time: 5.06583
+A0C4B0: Average joining time: 4.39912
+A0C4B3: Average joining time: 3.19901
