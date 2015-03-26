@@ -191,7 +191,7 @@ int Timeslot::timeslotManager(int method)
 		*/
 		timeslotOn = rand.getNumber( N * listenerChannels ) + 1;
 		
-		//cout<<"timeslotOn: "<<timeslotOn<<endl;
+		//cout<<"Staggered"<<endl;
 		
 		//increment the asn, 
 		while(asn < timeslotOn)

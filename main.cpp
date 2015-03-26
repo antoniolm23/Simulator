@@ -60,7 +60,9 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	cout<<advChannels<<endl;
+	if(listChannels > advChannels)
+		listChannels = advChannels;
+	//cout<<advChannels<<endl;
 	
 	//create a general class from which random numbers will be extracted
 	Random r;
@@ -89,7 +91,7 @@ int main(int argc, char **argv)
 		/*
 			* NOTE: By assumption in the file IDs are ordered
 			* assign to eaxh node as many links as declared into the file
-			*/
+		*/
 		if(id != pa.nodeID) 
 		{
 			tmp.setNodeID(pa.nodeID);

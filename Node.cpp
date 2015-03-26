@@ -71,7 +71,7 @@ void advNode::insertLink(int chOff, int ts)
 	aL.channelOffset = chOff;
 	aL.timeslot = ts;
 	
-	cout<<nodeId<<" insert: "<<aL.channelOffset<<aL.timeslot<<endl;
+	//cout<<nodeId<<" insert: "<<aL.channelOffset<<aL.timeslot<<endl;
 	
 	//insert in the list
 	advertisingLinks.push_back(aL);

@@ -32,7 +32,7 @@ double Stat::computeStatistic() {
 	double sum = 0;
 	double ret;
 	
-	const int iterations = 1000 * 1000;
+	const int iterations = 100 * 1000;
 	
 	for(list<statElem>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
@@ -63,12 +63,12 @@ void Stat::print()
 
 void Stat::print(string t)
 {
-	cout<<"othermethodCalled"<<endl;
+	//cout<<"othermethodCalled"<<endl;
 	ofstream myfile;
 	myfile.open("statistics.txt", ios::app);
 	
 	double tot = computeStatistic();
-	myfile<<t<<": Average joining time: "<<tot<<endl;; 
+	myfile<<t<<"\t: Avg:\t"<<tot<<endl;; 
 	
 	myfile.close();
 }

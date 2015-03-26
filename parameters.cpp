@@ -38,8 +38,8 @@ void parsing::doParsing()
 	}
 	
 	//print the list of obtained parameters to perform a checking
-	for(list<parameter>::iterator at = parameterList.begin(); at != parameterList.end(); ++at)
-		cout<<"NodeID: "<<at->nodeID<<"\tChannelOffset: "<<at->chOff<<"\tTimeslot: "<<at->timeslot<<endl;
+	//for(list<parameter>::iterator at = parameterList.begin(); at != parameterList.end(); ++at)
+		//cout<<"NodeID: "<<at->nodeID<<"\tChannelOffset: "<<at->chOff<<"\tTimeslot: "<<at->timeslot<<endl;
 	
 }
 

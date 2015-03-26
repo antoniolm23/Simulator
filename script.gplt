@@ -1,0 +1,7 @@
+set terminal png
+set output "./img.png"
+
+set xlabel "X"
+set ylabel "Avg. join time"
+set grid
+plot "./plotta.txt" using 1:2 title "Exp1" with lines 
