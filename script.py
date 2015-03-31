@@ -4,7 +4,7 @@ import itertools
 import sys
 #open the conf.txt file and write a new configuration in it
 
-for occupied in range(8, 15):
+for occupied in range(2, 15):
 	combo = itertools.combinations(range(15), occupied)
 	for c in combo:
 		
@@ -14,16 +14,16 @@ for occupied in range(8, 15):
 		#split the chcombo entry
 		ch = itertools.chain(c)
 		z = ""
+		i = 0
 		for t in ch:
 			#print t;
 			#print "new element in chain"
 			nc = t / 3;
 			ns = t % 3;
-			
 			z += "S%i%i" % (ns, nc)
-			
 			#output of the form id\tnc\tns\n
-			out_file.write("%i\t%i\t%i\n" % (0, nc, ns))
+			out_file.write("%i\t%i\t%i\n" % (i, nc, ns))
+			i += 1
 			#command = "./simulation -c 5 -l 5 -m 2 -s " + z
 			#print command
 		out_file.close()

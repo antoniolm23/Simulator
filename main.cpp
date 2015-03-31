@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	int c;
 	
 	//parameters to be set with predefined values
-	int iterations = 100 * 1000;
+	int iterations = 10 * 1000;
 	int advertisers = 1;
 	int advChannels = 16;
 	int listChannels = 16;
@@ -80,38 +80,38 @@ int main(int argc, char **argv)
 	
 	int id = -1;
 	
+	advNode tmp = advNode(advChannels); 
+	
 	//create as many advertisers as needed and then put them in the list
 	while(p.getParameterSize() > 0) 
 	{
-		//each node has its own id
-		advNode tmp = advNode( advChannels );
-		
+		//cout<<"parameter size: "<<p.getParameterSize()<<"\n";
+		//get a new parameter
 		parameter pa = p.getParameter();
 		
-		/*
-			* NOTE: By assumption in the file IDs are ordered
-			* assign to eaxh node as many links as declared into the file
-		*/
-		if(id != pa.nodeID) 
+		//if I'm inserting a new link for a given node
+		if(id == pa.nodeID) 
 		{
-			tmp.setNodeID(pa.nodeID);
-		}
-		
-		tmp.insertLink(pa.chOff, pa.timeslot);
-		
-		while(id == pa.nodeID && p.getParameterSize() > 0)
-		{
-			pa = p.getParameter();
 			tmp.insertLink(pa.chOff, pa.timeslot);
 		}
 		
-		
-		//cout<<pa.nodeID<<pa.chOff<<pa.timeslot<<endl;
-		id = pa.nodeID;
-		
-		advNodes.push_back(tmp);
+		//otherwise insantiate a new node
+		else
+		{
+			if(id != -1) 
+			{
+				advNodes.push_back(tmp);
+				//cout<<"node inserted\n";
+			}
+			tmp = advNode(advChannels);
+			tmp.setNodeID(pa.nodeID);
+			tmp.insertLink(pa.chOff, pa.timeslot);
+			id = pa.nodeID;
+		}
 		
 	}
+	
+	advNodes.push_back(tmp);
 		
 	for(int j = 0; j < iterations; j++)
 	{

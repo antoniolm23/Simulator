@@ -3,4 +3,4 @@ set output "5adv.png"
 set xlabel "Schema"
 set ylabel "Avg"
 set style line 5 lt rgb "green" lw 2 pt 4
-plot "avg5.txt" using 1:2 with linespoints ls 5 
+plot "avg.txt" using 1:2 with linespoints ls 5 

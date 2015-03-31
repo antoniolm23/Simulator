@@ -32,7 +32,7 @@ double Stat::computeStatistic() {
 	double sum = 0;
 	double ret;
 	
-	const int iterations = 100 * 1000;
+	const int iterations = 10 * 1000;
 	
 	for(list<statElem>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{

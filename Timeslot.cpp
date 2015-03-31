@@ -6,6 +6,7 @@
 void Timeslot::addNode(advNode a)
 {
 	listNode.push_back(a);
+	//cout<<"added node"<<a.getNodeID()<<"\n";
 }
 void Timeslot::insertActive(int asn)
 {
@@ -13,10 +14,12 @@ void Timeslot::insertActive(int asn)
 	
 	for( list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it  )
 	{
+		//cout<<"ListNode: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		//if node active then add a record in the list
 		if((channelUsed = it -> getUsedChannel(asn)) != -1) 
 		{
 			activeNode.push_back(*it);
+			//cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		}
 	}
 }
