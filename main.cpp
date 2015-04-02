@@ -24,24 +24,27 @@ int main(int argc, char **argv)
 	int c;
 	
 	//parameters to be set with predefined values
-	int iterations = 10 * 1000;
-	int advertisers = 1;
+	int iterations = 100 * 1000;
 	int advChannels = 16;
 	int listChannels = 16;
 	int method = 1;
 	string sTmp = "";
+	double ploss = 0.0;
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:m:s:")) != -1) 
+    while((c = getopt(argc, argv, "i:c:l:m:s:p:")) != -1) 
 	{
 		switch(c)
 		{
 			case 'i':
 				iterations = atoi(optarg);
 				break;
+			/*
+			 * Advertisers removed since I use a file that states the number of advertisers
 			case 'a':
 				advertisers = atoi(optarg);
 				break;
+			*/
 			case 'c':
 				advChannels = atoi(optarg);
 				break;
@@ -53,6 +56,14 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				sTmp = optarg;
+				break;
+			case 'p':
+				/*
+				 * ploss is inserted as integer.floating
+				 * e.g. 30% => 0.3
+				 */
+				ploss = atof(optarg);
+				//cout<<optarg<<": "<<ploss<<"\n";
 				break;
 			case '?':
 				cout<<optarg<<endl;
@@ -116,9 +127,14 @@ int main(int argc, char **argv)
 	for(int j = 0; j < iterations; j++)
 	{
 		
+		//get the number of listener channel
 		int listenerChannel = r.getNumber(listChannels);
 		
 		Timeslot t = Timeslot(r, listChannels);
+		
+		//check if we need to add the probability
+		if(method == PLOSS_SCENARIO)
+			t.setProbability(ploss);
 		
 		//add the listener
 		t.addListener(listenerChannel);
@@ -129,15 +145,24 @@ int main(int argc, char **argv)
 			t.addNode(*it);
 		}
 		
-		int frameSlotNumber = t.timeslotManager(method);
+		/*
+		 * via the timeslot manager gather:
+		 * in the fixed schema the number of framslot elapsed
+		 * in the others the number of timeslots elapsed
+		 */
+		int slotNumber = t.timeslotManager(method);
 		
 		//now it's possible to compute statistics
-		s.statInsert(frameSlotNumber);
+		s.statInsert(slotNumber);
 		
 		//delete all the lists
 		t.erase();
 	}
+	//free resources
 	advNodes.erase(advNodes.begin(), advNodes.end());
+	
+	//compute and print statistics
+	s.setIterations(iterations);
 	s.print(sTmp);
 	
     return 0;

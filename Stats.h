@@ -16,9 +16,12 @@ class Stat
 {
 	list<statElem> statsList;
 	double computeStatistic();
+	
+	int iterations;
 public:
 	Stat() {};
 	void statInsert(int tsn);
+	void setIterations(int);
 	void print();
 	void print(string t);
 };

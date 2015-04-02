@@ -8,6 +8,10 @@ void Timeslot::addNode(advNode a)
 	listNode.push_back(a);
 	//cout<<"added node"<<a.getNodeID()<<"\n";
 }
+
+/*
+ * From the list of all the nodes extract only the active nodes in that timeslot
+ */
 void Timeslot::insertActive(int asn)
 {
 	int channelUsed;
@@ -18,7 +22,24 @@ void Timeslot::insertActive(int asn)
 		//if node active then add a record in the list
 		if((channelUsed = it -> getUsedChannel(asn)) != -1) 
 		{
-			activeNode.push_back(*it);
+			
+			/*
+			 * if there is a certain ploss of losing the message, a node can be inserted in 
+			 * the list of active nodes according to that probability 
+			 * i.e. a node is active with probability 1 - ploss
+			 */
+			if(method == PLOSS_SCENARIO)
+			{
+				double pActive = rand.getNumber01();
+				//cout<<pActive<<" VS "<<ploss<<endl;
+				if(pActive > ploss)
+					activeNode.push_back(*it);
+			}
+			
+			else 
+				activeNode.push_back(*it);
+			
+			
 			//cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		}
 	}
@@ -174,19 +195,20 @@ bool Timeslot::solveCollisions()
  * @params: method used
  * @return: framselot elapsed
  */
-int Timeslot::timeslotManager(int method)
+int Timeslot::timeslotManager(int m)
 {
-	
+	method = m;
 	bool matchFound = false;
 	char t;
 	
 	int timeslotOn = 0;
+	
 	/*
-	* In the STAGGERED schema, a node becomes active at a certain point 
+	* In the STAGGERED schema and in all other schemas, a node becomes active at a certain point 
 	* and it waits until the first EB is received correctly ALWAYS ON and
 	* ON THE SAME CHANNEL 
 	*/
-	if(method == STAGGERED)
+	if(method == STAGGERED || method == PLOSS_SCENARIO)
 	{
 		/*
 		* N is the number of timeslots, listenerChannels is the number of channels
@@ -204,7 +226,11 @@ int Timeslot::timeslotManager(int method)
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
 		
-		//insert active nodes in the list of active nodes
+		/*
+		 * insert active nodes in the list of active nodes
+		 * handles the ploss. In this case ploss is intended as the probability of 
+		 * having a certain node active in its turn
+		 */
 		insertActive(asn);
 		
 		//print the list of active channels
@@ -237,10 +263,22 @@ int Timeslot::timeslotManager(int method)
 		return ratio;
 	}
 		
+	//otherwise return the number of timeslot elapsed
 	else
 	{
 		int ret = asn - timeslotOn;
 		//cout<<"return value: "<<ret<<endl; 
 		return ret;
 	}
+}
+
+/*
+ * The probability declares how much is the packet loss that we have in our transmission
+ * By default it is 0
+ * @param: probability of having a loss
+ */
+void Timeslot::setProbability(double p)
+{
+	ploss = p;
+	//cout<<p<<":  "<<ploss<<endl;
 }

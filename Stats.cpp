@@ -32,8 +32,6 @@ double Stat::computeStatistic() {
 	double sum = 0;
 	double ret;
 	
-	const int iterations = 10 * 1000;
-	
 	for(list<statElem>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
 		sum += (it -> timeslotNumber * it->frequency);
@@ -50,7 +48,7 @@ void Stat::print()
 	ofstream myfile;
 	myfile.open("statistics.txt", ios::app);
 	
-	double tot = computeStatistic();
+	computeStatistic();
 	
 	for(list<statElem>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
@@ -61,6 +59,7 @@ void Stat::print()
 	myfile.close();
 }
 
+//print the statistic on the file, each statistic is preceeded by the string t
 void Stat::print(string t)
 {
 	//cout<<"othermethodCalled"<<endl;
@@ -71,6 +70,12 @@ void Stat::print(string t)
 	myfile<<t<<"\t: Avg:\t"<<tot<<endl;; 
 	
 	myfile.close();
+}
+
+//set the number of iterations performed
+void Stat::setIterations(int it)
+{
+	iterations = it;
 }
 
 
