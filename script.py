@@ -4,7 +4,7 @@ import itertools
 import sys
 #open the conf.txt file and write a new configuration in it
 
-for occupied in range(4, 6):
+for occupied in range(3, 4):
 	combo = itertools.combinations(range(15), occupied)
 	for c in combo:
 		
@@ -30,6 +30,6 @@ for occupied in range(4, 6):
 		command = "./simulation -c 5 -l 5 -m 4 -p 0.3 -s " + z
 		#print command
 		parameters = "-s " + z
-		call(["./simulation", "-c 5", "-l 5", "-m 4", "-p 0.3", parameters])
+		call(["./simulation", "-c 5", "-l 5", "-m 4", "-p 0.3", "-i 100", parameters])
 		#print "hello";
 

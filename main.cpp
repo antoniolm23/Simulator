@@ -157,6 +157,9 @@ int main(int argc, char **argv)
 		
 		//delete all the lists
 		t.erase();
+		char f;
+		//cin>>f;
+		//cout<<f<<endl;
 	}
 	//free resources
 	advNodes.erase(advNodes.begin(), advNodes.end());

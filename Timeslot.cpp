@@ -234,8 +234,8 @@ int Timeslot::timeslotManager(int m)
 		insertActive(asn);
 		
 		//print the list of active channels
-		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
-		//print();
+		cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
+		print();
 		
 		/*
 		 * In the fixed schema the listener becomes active at the first slot
