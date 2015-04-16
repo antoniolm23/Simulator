@@ -153,7 +153,7 @@ bool Timeslot::solveCollisions()
 			if(colliding.size() > 1) 
 			{
 				int size = colliding.size();
-				cout<<"size is: "<<size<<endl;
+				//cout<<"size is: "<<size<<endl;
 				int* genNumbers = new int[size];
 				int i = 0;
 				//cout<<"generatedNumbers:";
@@ -234,8 +234,8 @@ int Timeslot::timeslotManager(int m)
 		insertActive(asn);
 		
 		//print the list of active channels
-		cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
-		print();
+		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
+		//print();
 		
 		/*
 		 * In the fixed schema the listener becomes active at the first slot

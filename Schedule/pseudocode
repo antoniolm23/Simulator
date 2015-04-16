@@ -1,0 +1,31 @@
+list schedule(Nc, Nt, Na) 
+{
+	list
+	
+	step = Nc * Nt / Na
+
+	if((Nc * Nt) % Na != 0)
+		<check if better step or step+1>
+	
+
+	//assigned slot 0,0
+	distance = step;
+	for(int i = 1; i < Na; i++ )
+		
+		<verify if step change needed> //ONLY IF DIVISION WITH REST
+		
+		timeslot = distance % Nt;
+		
+		channel = retrieveChannel(distance, Nc);
+		
+		list.add(timeslot, channel);
+		distance = distance + step;
+	return list;
+}
+
+int retrieveChannel(int distance, int Nc) {
+	for(int j = 0; j < Nc; j++)
+		if((distance + j) % Nc == PHYCHANNEL)
+			return j;
+}
+
