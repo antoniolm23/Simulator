@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 	s.computeSchedule();
 	s.setPloss(ploss);
 	s.evaluate();
-	//cout<<s;
+	cout<<s;
 	//cout<<endl;
 	return 0;
 }
