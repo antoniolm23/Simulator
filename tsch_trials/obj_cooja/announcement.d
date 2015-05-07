@@ -1,0 +1,10 @@
+obj_cooja/announcement.o: ../../core/net/rime/announcement.c \
+ ../../core/./net/rime/announcement.h ../../core/./net/rime/rimeaddr.h \
+ ../../platform/cooja/./contiki-conf.h project-conf.h \
+ ../../core/dev/cooja-debug.h ../../core/./lib/list.h \
+ ../../core/./sys/cc.h
+../../core/net/rime/announcement.c :
+ ../../core/./net/rime/announcement.h ../../core/./net/rime/rimeaddr.h :
+ ../../platform/cooja/./contiki-conf.h project-conf.h :
+ ../../core/dev/cooja-debug.h ../../core/./lib/list.h :
+ ../../core/./sys/cc.h :
