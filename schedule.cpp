@@ -13,14 +13,14 @@
  * 			nc is the number of channels
  * 			na is the number of advertisign cells that can be used
  */
-schedule::schedule(int ts, int nc, int na)
+Schedule::Schedule(int ts, int nc, int na)
 {
-	scheduling = list<timeslot>();
+	scheduling = list<advLink>();
 	ti = list<int>();
 	ti.push_back(0);
 	//occupy the first cell of the matrix
-	timeslot t;
-	t.ts = t.nc = 0;
+	advLink t;
+	t.timeslot = t.channelOffset = 0;
 	scheduling.push_back(t);
 	
 	totSlots = ts;
@@ -31,12 +31,12 @@ schedule::schedule(int ts, int nc, int na)
 /*
  * Function to output the result
  */
-ostream& operator<<(ostream& ios, const schedule& s)
+ostream& operator<<(ostream& ios, const Schedule& s)
 {
-	list<timeslot> l = s.scheduling;
-	list<timeslot>::iterator it;
-	for( it = l.begin(); it != l.end(); ++it) 
-		ios<<"timeslot: "<< it -> ts<<"\tchannel: "<<it->nc<<"\n";
+	
+	list<advLink>::const_iterator it;
+	for( it = s.scheduling.begin(); it != s.scheduling.end(); ++it) 
+		ios<<"timeslot: "<< it -> timeslot<<"\tchannel: "<<it->channelOffset<<"\n";
 	return ios;
 }
 
@@ -47,7 +47,7 @@ ostream& operator<<(ostream& ios, const schedule& s)
  * @params: the absolute time
  * @return: the timeslot in the first slotframe
  */
-int schedule::computeTimeslot(int ti)
+int Schedule::computeTimeslot(int ti)
 {
 	return ti % totSlots;
 }
@@ -59,7 +59,7 @@ int schedule::computeTimeslot(int ti)
  * @params: the absolute time
  * @return: the channelOffset
  */
-int schedule::computeChannelOffset(int ti)
+int Schedule::computeChannelOffset(int ti)
 {
 	for(int j = 0; j < totChannel; j++) 
 		if(((ti + j) % totChannel) == PHYCHANNEL)
@@ -67,21 +67,21 @@ int schedule::computeChannelOffset(int ti)
 	return -1;
 }
 
-/*
+/**
  * If there are two possibilities in picking the distance,
  * this method computes the best one according to performances
  * @params: the smaller distance
  * @return: the best one
  */
-
-/**
+/** 
  * NOTE:
  * It's computed only the numerator part of the sum, it's avoided also the division by 
  * 2 that must be performed to compute a sum via the Gauss method, it's possible 
  * to behave in this way since the denominator part is equal for both numbers
  * @params: step, remaining timeslots to distribute, advertiser cells to be used 
  */
-int schedule::computePerformance(int dist, int cycle, int adv) {
+int Schedule::computePerformance(int dist, int cycle, int adv) 
+{
 	
 	int d = dist;
 	int sumSmallDistance, sumLargeDistance;
@@ -109,9 +109,8 @@ int schedule::computePerformance(int dist, int cycle, int adv) {
  * so that each node knows the timeslot to use and the 
  * channel offset to use
  */
-list<timeslot> schedule::computeSchedule()
+list<advLink> Schedule::computeSchedule()
 {
-	
 	bool restDivision = false;
 	
 	/* 
@@ -135,10 +134,11 @@ list<timeslot> schedule::computeSchedule()
 		restDivision = true;
 	}
 	
-	timeslot t;
+	advLink t;
 	int step = distance;
 	tmp = 0;
 	ti.push_back(cycle - 1);
+	
 	/*
 	 * For each ti compute the originating schema
 	 */
@@ -156,10 +156,10 @@ list<timeslot> schedule::computeSchedule()
 		}
 		
 		//compute the assigned timeslot
-		t.ts = computeTimeslot(distance);
+		t.timeslot = computeTimeslot(distance);
 		
 		//compute the assigned channel
-		t.nc = computeChannelOffset(distance);
+		t.channelOffset = computeChannelOffset(distance);
 		
 		//insert the computed timeslot in the list
 		scheduling.push_back(t);
@@ -172,7 +172,7 @@ list<timeslot> schedule::computeSchedule()
 	
 }
 
-void schedule::setPloss(double p)
+void Schedule::setPloss(double p)
 {
 	ploss = p;
 }
@@ -182,7 +182,7 @@ void schedule::setPloss(double p)
  * Once an optimal schedule has been found evaluate it in order to know the lower bound
  * for the average joining time
  */
-void schedule::evaluate()
+void Schedule::evaluate()
 {
 	ti.sort();
 	list<int>::iterator it, jt, et;

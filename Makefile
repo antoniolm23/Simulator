@@ -2,7 +2,7 @@ CFLAGS 	:= -ggdb -Wall
 CC := g++
 DEBUG ?= 
 
-OBJS := Node.o Random.o Stats.o Timeslot.o parameters.o
+OBJS := Node.o Random.o Stats.o Timeslot.o parameters.o schedule.o
 
 all: simulation
 
@@ -19,6 +19,8 @@ Timeslot.o:		Timeslot.cpp
 			g++ -c $(CFLAGS) $(DEBUG) Timeslot.cpp
 parameters.o:		parameters.cpp
 			g++ -c $(CFLAGS) $(DEBUG) parameters.cpp
+schedule.o:		schedule.cpp
+			g++ -c $(CFLAGS) $(DEBUG) schedule.cpp
 
 			
 clean:

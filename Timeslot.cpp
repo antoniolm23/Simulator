@@ -1,5 +1,17 @@
 #include "Timeslot.h"
 
+/**
+ * Constructor
+ * @param: the random class, the transmission range, the listener channel 
+ */
+Timeslot::Timeslot(Random r, double ra, int lc)
+{
+	asn = 0; 
+	rand = r; 
+	ploss = 0;
+	transmissionRange = ra;
+	listenerChannels = lc;
+}
 /*
  * Functions to insert a node in one of the lists
  */
@@ -9,14 +21,15 @@ void Timeslot::addNode(advNode a)
 	//cout<<"added node"<<a.getNodeID()<<"\n";
 }
 
-/*
+/**
  * From the list of all the nodes extract only the active nodes in that timeslot
+ * @param: absolute sequence number
  */
 void Timeslot::insertActive(int asn)
 {
 	int channelUsed;
 	
-	for( list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it  )
+	for( list<advNode>::iterator it = neighbours.begin(); it != neighbours.end(); ++it  )
 	{
 		//cout<<"ListNode: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		//if node active then add a record in the list
@@ -45,22 +58,28 @@ void Timeslot::insertActive(int asn)
 	}
 }
 
-/*
+/**
  * adds the listener channel
  * @params: listener channel without ChannelStart
  */
-void Timeslot::addListener(int l)
+void Timeslot::setListenerChannel(int l)
 {
-	listener = l + CHSTART;
+	listener.channelUsed = l + CHSTART;
 }
 
 //searches for a match throughout the list of advertisers
-bool Timeslot::compareChannel()
+bool Timeslot::compareChannel(int timeslotOn)
 {
+	if(asn < timeslotOn)
+	{
+		return false;
+		
+	}
+	
 	//scan all the list looking for a match
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
-		if(it->getAbsoluteChannel() == listener)
+		if(it->getAbsoluteChannel() == listener.channelUsed)
 			return true;
 	}
 	return false;
@@ -68,7 +87,7 @@ bool Timeslot::compareChannel()
 
 void Timeslot::print()
 {
-	cout<<listener<<endl;
+	cout<<listener.channelUsed<<endl;
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
 		cout<<'\t'<<it->getNodeID()<<' '<<it->getAbsoluteChannel();
@@ -82,15 +101,34 @@ void Timeslot::erase()
 	listNode.erase(listNode.begin(), listNode.end());
 	eraseActive();
 }
+
 void Timeslot::eraseActive()
 {
 	activeNode.erase(activeNode.begin(), activeNode.end());
 }
 
+
+/**
+ * Function used when we use the tsch random number generator, to remember the 
+ * fact that we have generated a number in the listNode too, in fact while 
+ * activeNode is a temporary list, listNode is the definitive one.
+ * @param: nodeId: the unique identifier for a node; size: the max dimension of the random number
+ */
+int Timeslot::getRandomNumber(int nodeId, int size) {
+	
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it ) {
+		if(it -> getNodeID() == nodeId)
+			return it -> generateNumber(size, rand);
+	}
+	return -1;
+}
+
+
 //find if the max value available (size-1) is present in the list 
 int findMax(int* v, int size) 
 {
-	int max = size - 1;
+	//int max = size - 1;
+	int max = 0;
 	int totMax = 0;
 	for(int i = 0; i < size; i++) {
 		if(max == v[i])
@@ -115,11 +153,11 @@ bool find(list<int> l, int t) {
 	return false;
 }
 
-/*
+/**
  * Try to solve a collision in the same timeslot if there are more thn one node that want to transmitt
  * @return: true -> collision solved, false collision or colliding nodes are off
  */
-bool Timeslot::solveCollisions()
+bool Timeslot::solveUniformCollisions()
 {
 	//cout<<"to solve collisons"<<endl;
 	
@@ -156,11 +194,16 @@ bool Timeslot::solveCollisions()
 				//cout<<"size is: "<<size<<endl;
 				int* genNumbers = new int[size];
 				int i = 0;
-				//cout<<"generatedNumbers:";
+				//cout<<"generatedNumbers:\t";
 				
 				//let each node generate a random number to handle collision
-				for( list<advNode>::iterator at = colliding.begin(); at != colliding.end(); ++at ) {
-					genNumbers[i] = at -> generateNumber(size, rand);
+				for( list<advNode>::iterator at = colliding.begin(); at != colliding.end(); ++at ) 
+				{
+					/*
+					 * to use the tsch random number generator, the rand class has to be null
+					 */
+					genNumbers[i] = getRandomNumber(at -> getNodeID(), size);
+					
 					//cout<<genNumbers[i]<<'\t';
 					i++;
 				}
@@ -185,7 +228,7 @@ bool Timeslot::solveCollisions()
 	return collisionSolved;
 }
 
-/*
+/**
  * Function that operates the most operations on a timeslot:
  * 1) arranges links in the timeslot
  * 2) checks wether or not channels are equal 
@@ -199,9 +242,13 @@ int Timeslot::timeslotManager(int m)
 {
 	method = m;
 	bool matchFound = false;
-	char t;
+	asn = 0;
 	
 	int timeslotOn = 0;
+	
+	//for each node in the list checks how many colliders are there
+	setNodesCollisionProbability();
+	selectNeighbours();
 	
 	/*
 	* In the STAGGERED schema and in all other schemas, a node becomes active at a certain point 
@@ -234,20 +281,20 @@ int Timeslot::timeslotManager(int m)
 		insertActive(asn);
 		
 		//print the list of active channels
-		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
-		//print();
+		cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
+		print();
 		
 		/*
-		 * In the fixed schema the listener becomes active at the first slot
-		 * and remain active until a match is found
+		 * In every considered schemas the listener becomes active at a certain slot
+		 * and remain active on the same channel until a match is found
 		 */
-		bool collisionSolved = solveCollisions();
-		
+		//bool collisionSolved = solveUniformCollisions();
+		bool collisionSolved = solveDifferentCollisions();
 		/*
 		* if listener and advertiser use the same channel and 
 		* there are no collisions then the match is found
 		*/
-		if(compareChannel() && collisionSolved)  
+		if(compareChannel(timeslotOn) && collisionSolved)  
 		{
 			matchFound = true;
 		}
@@ -272,7 +319,7 @@ int Timeslot::timeslotManager(int m)
 	}
 }
 
-/*
+/**
  * The probability declares how much is the packet loss that we have in our transmission
  * By default it is 0
  * @param: probability of having a loss
@@ -282,3 +329,92 @@ void Timeslot::setProbability(double p)
 	ploss = p;
 	//cout<<p<<":  "<<ploss<<endl;
 }
+
+
+/**
+ * Function to set properties of the listener node
+ * @param: listenerNode structure
+ */
+bool Timeslot::setListener(listenerNode l)
+{
+	listener.channelUsed = l.channelUsed;
+	listener.xPos = l.xPos;
+	listener.yPos = l.yPos;
+	return allowableListener();
+}
+
+/**
+ * function that checks if the listener node has at least one neighbour
+ * then insert the neighbours in the list neighbours so that 
+ * we reduce the number of nodes that need to be simulated 
+ */
+bool Timeslot::allowableListener()
+{
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	{
+		if ( abs(listener.xPos - it -> getPosX()) < transmissionRange && 
+			abs(listener.yPos - it -> getPosY() < transmissionRange) )
+			return true;
+	}
+	return false;
+}
+
+/**
+ * Select the list of neighbours of the listener
+ * In this way I save simulation time since I don't have to check every time every node
+ */
+void Timeslot::selectNeighbours()
+{
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	{
+		if(abs(listener.xPos - it -> getPosX()) < transmissionRange &&
+			abs(listener.yPos - it -> getPosY() < transmissionRange))
+		{
+			neighbours.push_back(*it);
+			cout << it -> getNodeID() << "" 
+			<< it -> getPosX() << "\t" << it -> getPosY() << endl;
+		}
+	}
+}
+
+/**
+ * For each nodes, counts the neighbours and sets the collision probability
+ */
+void Timeslot::setNodesCollisionProbability()
+{
+	int collision = 0;
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++ it) 
+	{
+		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
+		{
+			if(abs(jt -> getPosX() - it -> getPosX()) < transmissionRange &&
+				abs(jt -> getPosY() - it -> getPosY() < transmissionRange))
+				collision++;
+		}
+		it -> setColliders(collision);
+		cout << it -> getNodeID() << " " << it -> getColliders() << endl;
+	}
+}
+
+/**
+ * For each timeslot each node generates a number and has a certain probability of 
+ * transmitting. If there are more than one node in charge of transmitting a collision occurs
+ * @return: true if a collision doesn't occurs, false otherwise
+ */
+bool Timeslot::solveDifferentCollisions()
+{
+	int transmittingNodes = 0;
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	{
+		int genNumb = it -> generateNumber(it -> getColliders(), rand);
+		if(genNumb == TRANSMISSIONFLAG)
+			transmittingNodes++;
+	}
+	if(transmittingNodes == 1)
+		return true;
+	else
+		return false;
+	
+	
+}
+
