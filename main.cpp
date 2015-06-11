@@ -22,9 +22,10 @@ bool search(position p, list<advNode> listAdv)
 //utility function to generate positions of advertiser nodes
 position generatePosition(int squareSide, Random random, list<advNode> listAdv)
 {
-	bool acceptable = false;
+	
+	bool acceptable = true;
 	position p;
-	while(!acceptable)
+	while(acceptable)
 	{
 		p.x = random.getNumber(squareSide);
 		p.y = random.getNumber(squareSide);
@@ -215,10 +216,10 @@ int main(int argc, char **argv)
 	list<advLink> advertisingCells = list<advLink>();
 	Schedule schedule = Schedule(N, advertiserChannels, numberAdvertisingCells);
 	advertisingCells = schedule.computeSchedule();
-	cout << schedule << endl;
+	//cout << schedule << endl;
 	for(int j = 0; j < topologiesToGenerate; j++)
 	{
-		
+		cout << "step: " << j << endl;
 		/*** b ***/
 		//generate advertisers
 		for(int i = 0; i < advertisers; i++)
@@ -226,11 +227,14 @@ int main(int argc, char **argv)
 			//set available channels
 			advNode node = advNode(advertiserChannels, transmissionRange);
 			
+			//insert link
+			node.insertLinks(advertisingCells);
+			
 			//generate node position, check if the position is already occupied
 			position p = generatePosition(squareSide, random, advNodes);
 			node.setPosition(p);
 
-			cout<<p.x<<"\t"<<p.y<<endl;
+			cout << "Positions: " << p.x << "\t" << p.y << endl;
 			
 			//set type of node
 			if(i == 0)

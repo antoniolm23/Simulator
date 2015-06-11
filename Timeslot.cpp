@@ -53,7 +53,7 @@ void Timeslot::insertActive(int asn)
 				activeNode.push_back(*it);
 			
 			
-			//cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
+			cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		}
 	}
 }
@@ -272,7 +272,7 @@ int Timeslot::timeslotManager(int m)
 	
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
-		
+		char t;
 		/*
 		 * insert active nodes in the list of active nodes
 		 * handles the ploss. In this case ploss is intended as the probability of 
@@ -283,7 +283,8 @@ int Timeslot::timeslotManager(int m)
 		//print the list of active channels
 		cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
 		print();
-		
+		cin>>t;
+		cout<<endl;
 		/*
 		 * In every considered schemas the listener becomes active at a certain slot
 		 * and remain active on the same channel until a match is found
@@ -367,11 +368,14 @@ void Timeslot::selectNeighbours()
 {
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
 	{
-		if(abs(listener.xPos - it -> getPosX()) < transmissionRange &&
-			abs(listener.yPos - it -> getPosY() < transmissionRange))
+		int dX = (it ->getPosX() - listener.xPos) * (it -> getPosX() - listener.xPos);
+		int dY = (it ->getPosY() - listener.yPos) * (it -> getPosY() - listener.yPos);
+		double distance = sqrt((dX) + dY );
+			
+		if(distance < transmissionRange)
 		{
 			neighbours.push_back(*it);
-			cout << it -> getNodeID() << "" 
+			cout << it -> getNodeID() << " " 
 			<< it -> getPosX() << "\t" << it -> getPosY() << endl;
 		}
 	}
@@ -387,12 +391,15 @@ void Timeslot::setNodesCollisionProbability()
 	{
 		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
 		{
-			if(abs(jt -> getPosX() - it -> getPosX()) < transmissionRange &&
-				abs(jt -> getPosY() - it -> getPosY() < transmissionRange))
+			int dX = (it ->getPosX() - jt -> getPosX()) * (it -> getPosX() - jt -> getPosX());
+			int dY = (it ->getPosY() - jt -> getPosY()) * (it -> getPosY() - jt -> getPosY());
+			double distance = sqrt((dX) + dY );
+			if(distance < transmissionRange)
 				collision++;
 		}
 		it -> setColliders(collision);
-		cout << it -> getNodeID() << " " << it -> getColliders() << endl;
+		cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
+		collision = 0;
 	}
 }
 

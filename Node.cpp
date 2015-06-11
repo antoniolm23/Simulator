@@ -139,7 +139,11 @@ void advNode::setNodeID(int id)
  */
 void advNode::insertLinks(list< advLink > a)
 {
-	advertisingLinks = a;
+	for(list<advLink>::iterator it = a.begin(); it != a.end(); ++it)
+	{
+		advertisingLinks.push_back(*it);
+		cout <<"Scheduling: " << it -> channelOffset << '\t' <<it -> timeslot<<endl;
+	}
 }
 
 //return single coordinates of the node position
@@ -160,6 +164,7 @@ void advNode::setPosition(position p)
 {
 	pos.x = p.x;
 	pos.y = p.y;
+	
 }
 
 /**
