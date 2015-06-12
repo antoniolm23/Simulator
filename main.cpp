@@ -81,6 +81,7 @@ int main(int argc, char **argv)
 	string nameOfSchema = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
+	
 	//parsing passed parameters
     while((c = getopt(argc, argv, "i:a:c:l:s:p:t:q:o:y:f:b:z:")) != -1) 
 	{
@@ -249,6 +250,7 @@ int main(int argc, char **argv)
 			int id = i + 1;
 			node.setNodeID(id);
 			
+			//insert nodes in lists
 			advNodes.push_back(node);
 			timeslot.addNode(node);
 		}
@@ -256,7 +258,7 @@ int main(int argc, char **argv)
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
 		{
-				
+			//generate the listener
 			bool acceptable = false;
 			while(!acceptable) 
 			{
@@ -269,23 +271,16 @@ int main(int argc, char **argv)
 			}
 			
 			cout<<"listener: "<< listener.xPos << "\t" << listener.yPos << endl;
-			char t;
-			cin>>t;
-			cout<<endl;
-			
 			
 			//timeslot.addListener(listener);
 			for(int c = 0; c < iterations; c++)
 			{
-				cin>>t;
-				cout<<endl;
-			
 				//check if we need to add the probability
 				if(ploss != 0)
 					timeslot.setProbability(ploss);
 				
-				int channel = random.getNumber(listenerChannels);
 				//set the listener channel
+				int channel = random.getNumber(listenerChannels);
 				timeslot.setListenerChannel(channel);
 				
 				/*
@@ -302,9 +297,6 @@ int main(int argc, char **argv)
 				//now it's possible to compute statistics
 				s.statInsert(slotNumber);
 				
-				//delete all the lists
-				//cin>>f;
-				//cout<<f<<endl;
 			}
 			
 		}

@@ -16,12 +16,12 @@
 Schedule::Schedule(int ts, int nc, int na)
 {
 	scheduling = list<advLink>();
-	ti = list<int>();
-	ti.push_back(0);
+	cellInSuperframe = list<int>();
+	cellInSuperframe.push_back(0);
 	//occupy the first cell of the matrix
-	advLink t;
-	t.timeslot = t.channelOffset = 0;
-	scheduling.push_back(t);
+	advLink link;
+	link.timeslot = link.channelOffset = 0;
+	scheduling.push_back(link);
 	
 	totSlots = ts;
 	totChannel = nc;
@@ -47,9 +47,9 @@ ostream& operator<<(ostream& ios, const Schedule& s)
  * @params: the absolute time
  * @return: the timeslot in the first slotframe
  */
-int Schedule::computeTimeslot(int ti)
+int Schedule::computeTimeslot(int absTime)
 {
-	return ti % totSlots;
+	return absTime % totSlots;
 }
 
 /**
@@ -59,10 +59,10 @@ int Schedule::computeTimeslot(int ti)
  * @params: the absolute time
  * @return: the channelOffset
  */
-int Schedule::computeChannelOffset(int ti)
+int Schedule::computeChannelOffset(int absTime)
 {
 	for(int j = 0; j < totChannel; j++) 
-		if(((ti + j) % totChannel) == PHYCHANNEL)
+		if(((absTime + j) % totChannel) == PHYCHANNEL)
 			return j;
 	return -1;
 }
@@ -134,18 +134,18 @@ list<advLink> Schedule::computeSchedule()
 		restDivision = true;
 	}
 	
-	advLink t;
+	advLink link;
 	int step = distance;
 	tmp = 0;
-	ti.push_back(cycle - 1);
+	cellInSuperframe.push_back(cycle - 1);
 	
 	/*
-	 * For each ti compute the originating schema
+	 * For each cellInSuperframe compute the originating schema
 	 */
 	for(int i = 1; i < totAdvertiser; i++) 
 	{
 		cout<<distance<<endl;
-		ti.push_back(distance);
+		cellInSuperframe.push_back(distance);
 		if(restDivision) {
 			tmp = step;
 			//cout<<"originalCycle: "<<cycle<<'\t';
@@ -156,13 +156,13 @@ list<advLink> Schedule::computeSchedule()
 		}
 		
 		//compute the assigned timeslot
-		t.timeslot = computeTimeslot(distance);
+		link.timeslot = computeTimeslot(distance);
 		
 		//compute the assigned channel
-		t.channelOffset = computeChannelOffset(distance);
+		link.channelOffset = computeChannelOffset(distance);
 		
 		//insert the computed timeslot in the list
-		scheduling.push_back(t);
+		scheduling.push_back(link);
 		
 		//go to the next absolute timeslot
 		distance += step;
@@ -184,18 +184,19 @@ void Schedule::setPloss(double p)
  */
 void Schedule::evaluate()
 {
-	ti.sort();
+	cellInSuperframe.sort();
 	list<int>::iterator it, jt, et;
-	list<double> ei = list<double>();
-	double e1 = 1;
+	list<double> etalist = list<double>();
+	double eta1 = 1;
 	int i = 1;
 	int gaussSum = 0;
 	double sum = 0;
 	double avg = 0;
-	it = ti.begin();
+	it = cellInSuperframe.begin();
 	
-	//compute the first e1
-	for( jt = it; ++jt != ti.end(); ) 
+	//BEGIN COMPUTE ETAi
+	//compute eta1
+	for( jt = it; ++jt != cellInSuperframe.end(); ) 
 	{
 		int prev, suc;
 		prev = *it;
@@ -206,46 +207,50 @@ void Schedule::evaluate()
 		jt = it;
 	}
 	int s = i - 1;
-	e1 = (1 + sum) / (1 - pow(ploss, s));
+	eta1 = (1 + sum) / (1 - pow(ploss, s));
 	//cout<<e1<<'\t'<<s<<endl;
-	ei.push_back(e1);
+	etalist.push_back(eta1);
 	
 	//now we have to compute all the other ei starting from the last one and going backwards
-	it = ti.end();
+	it = cellInSuperframe.end();
 	--it;
 	//cout<<"it: "<<*it<<'\t'<<*ti.end()<<'\t'<<*ti.begin()<<'\t'<<ti.back()<<endl;
-	for(jt = it; --jt != ti.begin();)
+	for(jt = it; --jt != cellInSuperframe.begin();)
 	{
 		int prev, suc;
 		suc = *it;
 		prev = *(--it);
 		//cout<<suc<<'\t'<<prev<<'\t'<<ei.back()<<endl;
-		if(ei.size() == 1)
-			sum = 1 + ploss * (suc - prev + ei.back());
+		if(etalist.size() == 1)
+			sum = 1 + ploss * (suc - prev + etalist.back());
 		else
-			sum = 1 + ploss * (suc - prev - 1 + ei.back());
-		ei.push_back(sum);
+			sum = 1 + ploss * (suc - prev - 1 + etalist.back());
+		etalist.push_back(sum);
 		//cout<<"Sum: "<<sum<<endl;
 	}
 	
+	//END COMPUTE ETAi
+	
+	//BEGIN COMPUTE SUMS
 	sum = 0;
 	//now that we have computed all the various ei, we have to compute the effective avg
-	it = ti.begin();
-	*(ti.end()) ++;
+	it = cellInSuperframe.begin();
+	//*(cellInSuperframe.end()) ++;
 	
-	//increment the cycle variable
-	et = ti.end();
+	//we need to add one to the last element in the list
+	//FIXME find a better way to do this
+	et = cellInSuperframe.end();
 	--et;
-	ti.pop_back();
+	cellInSuperframe.pop_back();
 	int tmp = *et;
 	tmp++;
-	ti.push_back(tmp);
-	et = ti.end();
+	cellInSuperframe.push_back(tmp);
+	et = cellInSuperframe.end();
 	--et;
 	//<<'\t'<<*et<<endl;
 	
 	//compute the final sums
-	for( jt = it; ++jt != ti.end(); ) 
+	for( jt = it; ++jt != cellInSuperframe.end(); ) 
 	{
 		int prev, suc;
 		prev = *it;
@@ -254,13 +259,15 @@ void Schedule::evaluate()
 		gaussSum = (suc - prev - 1) * (suc - prev) / 2;
 		suc = *et;
 		prev = *(--et);
-		sum += (suc - prev) * ei.front();
-		ei.pop_front();
+		sum += (suc - prev) * etalist.front();
+		etalist.pop_front();
 		
 		sum = sum + gaussSum;
 		
 		jt = it;
 	}
+	//END COMPUTE SUMS
+	
 	cout<<"Fploss"<<ploss<<":\t"<<sum/tmp<<endl;
 }
 

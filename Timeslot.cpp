@@ -41,7 +41,7 @@ void Timeslot::insertActive(int asn)
 			 * the list of active nodes according to that probability 
 			 * i.e. a node is active with probability 1 - ploss
 			 */
-			if(method == PLOSS_SCENARIO)
+			if(method == PLOSS_SCENARIO || ploss != 0) 
 			{
 				double pActive = rand.getNumber01();
 				//cout<<pActive<<" VS "<<ploss<<endl;
@@ -337,6 +337,7 @@ void Timeslot::setProbability(double p)
 /**
  * Function to set properties of the listener node
  * @param: listenerNode structure
+ * @return: if the listener can be in the selected position
  */
 bool Timeslot::setListener(listenerNode l)
 {
@@ -349,14 +350,18 @@ bool Timeslot::setListener(listenerNode l)
 /**
  * function that checks if the listener node has at least one neighbour
  * then insert the neighbours in the list neighbours so that 
- * we reduce the number of nodes that need to be simulated 
+ * we reduce the number of nodes that need to be simulated
+ * @return: true if the listener can be in that position, false otherwise 
  */
 bool Timeslot::allowableListener()
 {
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
 	{
-		if ( abs(listener.xPos - it -> getPosX()) < transmissionRange && 
-			abs(listener.yPos - it -> getPosY() < transmissionRange) )
+		int dX = (it ->getPosX() - listener.xPos) * (it -> getPosX() - listener.xPos);
+		int dY = (it ->getPosY() - listener.yPos) * (it -> getPosY() - listener.yPos);
+		double distance = sqrt((dX) + dY );
+		
+		if(distance < transmissionRange)
 			return true;
 	}
 	return false;
@@ -412,7 +417,6 @@ void Timeslot::setNodesCollisionProbability()
  */
 bool Timeslot::solveDifferentCollisions()
 {
-	
 	int transmittingNodes = 0;
 	for(list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
 	{

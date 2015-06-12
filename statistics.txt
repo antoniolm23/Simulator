@@ -6,3 +6,4 @@ opt23t16a4	: Avg:	243.373
 opt23t16a4	: Avg:	246.333
 opt23t16a4	: Avg:	233.541
 15channels	: Avg:	218.539
+	: Avg:	1273
