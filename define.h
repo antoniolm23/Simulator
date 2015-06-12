@@ -8,11 +8,12 @@
 //int he fixed schema nodes transmitt only in the first timeslot
 #define FIXEDSCHEMA 1
 //In the so-called staggered one to each node is assigned a transmission schema
-#define STAGGERED 2
+#define OPTIMUM 2
 //here we have the staggered schema plus a ploss probability that is the probability of having a loss 
 #define PLOSS_SCENARIO 4
 #define CRT 3
-
+#define RANDOMVERTICAL 5
+#define RANDOMHORIZONTAL 6
 
 #define COORDINATOR 1
 #define ADVERTISER 2
@@ -41,5 +42,12 @@ struct listenerNode
 	int xPos;
 	int yPos;
 	int channelUsed;
+};
+
+//provides a timeslot counter and a method indication
+struct statStruct
+{
+	int slotNumber;
+	int method;
 };
 #endif

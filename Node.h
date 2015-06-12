@@ -6,8 +6,6 @@
 #include "Random.h"
 using namespace std;
 
-
-
 //this class defines an advertiser Node or coordinator
 class advNode {
 	
@@ -25,12 +23,15 @@ class advNode {
 	double radius;
 	bool synchronized;
 	
-	Random tRandom;	
+	Random random;	
+	
+	advLink randomHorizontal;
+	advLink randomVertical;
 	
 public:
 	advNode(int ac, double);
-	int getUsedChannel(int);
-	int getState(int);
+	int getUsedChannel(int, int);
+	int getChannelOffset(int, int);
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
 	void insertLinks(list<advLink>);
@@ -45,4 +46,5 @@ public:
 	int getPosY();
 	void setColliders(int c) {colliders = c;}
 	int getColliders() {return colliders;}
+	void initRandomAdvertising(int, Random);
 };

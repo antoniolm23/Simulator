@@ -22,18 +22,18 @@ void Timeslot::addNode(advNode a)
 }
 
 /**
- * From the list of all the nodes extract only the active nodes in that timeslot
+ * From the list of all the neighbours nodes,
+ * extract only the active nodes in that timeslot
  * @param: absolute sequence number
  */
 void Timeslot::insertActive(int asn)
 {
 	int channelUsed;
-	
 	for( list<advNode>::iterator it = neighbours.begin(); it != neighbours.end(); ++it  )
 	{
 		//cout<<"ListNode: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		//if node active then add a record in the list
-		if((channelUsed = it -> getUsedChannel(asn)) != -1) 
+		if((channelUsed = it -> getUsedChannel(asn, method)) != -1) 
 		{
 			
 			/*
@@ -43,6 +43,7 @@ void Timeslot::insertActive(int asn)
 			 */
 			if(method == PLOSS_SCENARIO || ploss != 0) 
 			{
+				//cout<<"ploss"<<endl;
 				double pActive = rand.getNumber01();
 				//cout<<pActive<<" VS "<<ploss<<endl;
 				if(pActive > ploss)
@@ -247,23 +248,26 @@ int Timeslot::timeslotManager(int m)
 	int timeslotOn = 0;
 	
 	//for each node in the list checks how many colliders are there
-	setNodesCollisionProbability();
+	/*
+	 * Even though in RandomHorizontal or RandomVertical 
+	 * the collision probability is equal to 1/availablechannel,
+	 * to have an effective comparison between the methods I 
+	 * set the same collision probability for all the methods
+	 */
 	selectNeighbours();
 	
 	/*
-	* In the STAGGERED schema and in all other schemas, a node becomes active at a certain point 
+	* In the OPTIMUM schema and in all other schemas, a node becomes active at a certain point 
 	* and it waits until the first EB is received correctly ALWAYS ON and
 	* ON THE SAME CHANNEL 
 	*/
-	if(method == STAGGERED || method == PLOSS_SCENARIO)
+	if(method != FIXEDSCHEMA)
 	{
 		/*
 		* N is the number of timeslots, listenerChannels is the number of channels
 		* available to the listener
 		*/
 		timeslotOn = rand.getNumber( N * listenerChannels ) + 1;
-		
-		//cout<<"Staggered"<<endl;
 		
 		//increment the asn, 
 		while(asn < timeslotOn)
@@ -272,7 +276,7 @@ int Timeslot::timeslotManager(int m)
 	
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
-		//char t;
+		bool collisionSolved = false;
 		/*
 		 * insert active nodes in the list of active nodes
 		 * handles the ploss. In this case ploss is intended as the probability of 
@@ -281,21 +285,24 @@ int Timeslot::timeslotManager(int m)
 		insertActive(asn);
 		
 		//print the list of active channels
-		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
-		//print();
-		//cin>>t;
-		//cout<<endl;
+		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<'\t'<<method<<"****"<<endl;
+		
 		/*
 		 * In every considered schemas the listener becomes active at a certain slot
 		 * and remain active on the same channel until a match is found
 		 */
 		//bool collisionSolved = solveUniformCollisions();
-		bool collisionSolved = solveDifferentCollisions();
+		if(activeNode.size() > 0)
+		{
+			collisionSolved = solveDifferentCollisions();
+			//print();
+		}
+		
 		/*
 		* if listener and advertiser use the same channel and 
 		* there are no collisions then the match is found
 		*/
-		if(compareChannel(timeslotOn) && collisionSolved)  
+		if(compareChannel(asn) && collisionSolved)  
 		{
 			matchFound = true;
 		}
@@ -316,7 +323,7 @@ int Timeslot::timeslotManager(int m)
 	//otherwise return the number of timeslot elapsed
 	else
 	{
-		int ret = asn - timeslotOn;
+		int ret = asn - timeslotOn + 1;
 		//cout<<"return value: "<<ret<<endl; 
 		return ret;
 	}
@@ -382,8 +389,8 @@ void Timeslot::selectNeighbours()
 		if(distance < transmissionRange)
 		{
 			neighbours.push_back(*it);
-			cout << it -> getNodeID() << " " 
-			<< it -> getPosX() << "\t" << it -> getPosY() << endl;
+			//cout << it -> getNodeID() << " " 
+			//<< it -> getPosX() << "\t" << it -> getPosY() << endl;
 		}
 	}
 }
@@ -405,7 +412,7 @@ void Timeslot::setNodesCollisionProbability()
 				collision++;
 		}
 		it -> setColliders(collision);
-		cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
+		//cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
 		collision = 0;
 	}
 }
@@ -422,13 +429,19 @@ bool Timeslot::solveDifferentCollisions()
 	{
 		int genNumb = it -> generateNumber(it -> getColliders(), rand);
 		//cout << it -> getNodeID() << ": " << genNumb <<endl;
-		if(genNumb == TRANSMISSIONFLAG)
+		if(genNumb == (int)TRANSMISSIONFLAG)
 			transmittingNodes++;
 	}
 	if(transmittingNodes == 1)
+	{
+		//cout<<"transmission"<<endl;
 		return true;
+	}
 	else
+	{
+		//cout<<"DiffCollision:" <<transmittingNodes<<endl;
 		return false;
+	}
 	
 }
 

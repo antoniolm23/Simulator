@@ -8,6 +8,7 @@
 #include "Timeslot.h"
 #include "parameters.h"
 #include "schedule.h"
+#include <sstream>
 
 bool search(position p, list<advNode> listAdv)
 {
@@ -44,6 +45,20 @@ void saveTopology(list<advNode> advNodes)
 	{
 		file << it -> getPosX() << '\t' << it -> getPosY() << '\n';
 	}
+}
+
+/**
+ * Convert an integer to string
+ * @param: t is the integer to convert
+ * @return: the resultant string 
+ */
+string convertInt(int t)
+{
+	stringstream convert;	//needed to convert double to string
+	string tmpString;
+	convert << t;
+	tmpString = convert.str();
+	return tmpString;
 }
 
 /*
@@ -149,7 +164,7 @@ int main(int argc, char **argv)
 	list<advNode> advNodes;
 	
 	//list of statistics
-	Stat s;
+	Stat statistics;
 	Timeslot timeslot = Timeslot(random, transmissionRange, listenerChannels);
 	listenerNode listener;
 	
@@ -249,12 +264,17 @@ int main(int argc, char **argv)
 			//set the id of the node
 			int id = i + 1;
 			node.setNodeID(id);
+		
+			//initialize the random advertising schemas
+			node.initRandomAdvertising(RANDOMHORIZONTAL, random);
+			node.initRandomAdvertising(RANDOMVERTICAL, random);
 			
 			//insert nodes in lists
 			advNodes.push_back(node);
 			timeslot.addNode(node);
 		}
 		saveTopology(advNodes);
+		timeslot.setNodesCollisionProbability();
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
 		{
@@ -288,15 +308,30 @@ int main(int argc, char **argv)
 				* in the fixed schema the number of framslot elapsed
 				* in the others the number of timeslots elapsed
 				*/
-				int slotNumber;
+				
+				//statistic for the optimum schema
+				statStruct stat;
 				if(ploss != 0)
-					slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO);
+				{
+					stat.method = PLOSS_SCENARIO;
+					stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO);
+				}
 				else
-					slotNumber = timeslot.timeslotManager(STAGGERED);
+				{
+					stat.method = OPTIMUM;
+					stat.slotNumber = timeslot.timeslotManager(OPTIMUM);
+				}
+				statistics.statInsert(stat);
 				
-				//now it's possible to compute statistics
-				s.statInsert(slotNumber);
+				//statistic for randomhorizontal
+				stat.method = RANDOMHORIZONTAL;
+				stat.slotNumber = timeslot.timeslotManager(RANDOMHORIZONTAL);
+				statistics.statInsert(stat);
 				
+				//statistic for randomvertical
+				stat.method = RANDOMVERTICAL;
+				stat.slotNumber = timeslot.timeslotManager(RANDOMVERTICAL);
+				statistics.statInsert(stat);
 			}
 			
 		}
@@ -305,9 +340,14 @@ int main(int argc, char **argv)
 		advNodes.erase(advNodes.begin(), advNodes.end());
 	}
 	
+	if(nameOfSchema.compare("") == 0 )
+		nameOfSchema = "adv" + convertInt(advertisers) + "sq" + convertInt(squareSide);
+	
 	//compute and print statistics
-	s.setIterations(iterations);
-	s.print(nameOfSchema);
+	statistics.setIterations(iterations * numberListenerPositions * topologiesToGenerate);
+	statistics.print(nameOfSchema, RANDOMHORIZONTAL);
+	statistics.print(nameOfSchema, RANDOMVERTICAL);
+	statistics.print(nameOfSchema, OPTIMUM);
 	
     return 0;
 }

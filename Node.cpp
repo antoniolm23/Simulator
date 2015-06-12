@@ -15,10 +15,10 @@ advNode::advNode(int tc, double r)
  * Function that returns the channel actually used by this node
  * according to the formula:
  * channel = ChStart + [(ASN + chOff) % Nc ]
- * @param: AbsoluteSequenceNumber
+ * @param: AbsoluteSequenceNumber, method used
  * @return: the channel used if node active, -1 otherwise
  */
-int advNode::getUsedChannel(int asn) 
+int advNode::getUsedChannel(int asn, int method) 
 {
 	//determine timeslot number
 	int timeslot = asn % N;
@@ -26,7 +26,7 @@ int advNode::getUsedChannel(int asn)
 	int chOff;
 	
 	//getState returns the channelOffset if node has a link in that timeslot, -1 otherwise
-	if((chOff = getState(timeslot)) != -1) {
+	if((chOff = getChannelOffset(timeslot, method)) != -1) {
 		int usedChannel = CHSTART + ((asn + chOff) % availableChannels);
 		absoluteChannel = usedChannel;
 		return usedChannel;
@@ -48,24 +48,40 @@ void advNode::setState(bool s)
 }
 
 /**
- * Say if the node is sending beacons in this timeslot
- * @params: timeslot
+ * Get the channel offset used by the node 
+ * according to the method used to perform advertising,
+ * -1 if the node is not active
+ * @params: timeslot, the method used to transmitt EB
  * @return: channel offset if node is active, -1 otherwise
  */
-int advNode::getState(int timeslot) 
+int advNode::getChannelOffset(int timeslot, int method) 
 {
-	//search if there is a link with that timeslot
-	for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it) 
+	if(method == RANDOMVERTICAL)
 	{
-		if(it -> timeslot == timeslot)
-		{
-			//cout<<"active "<<nodeId<<endl;
-			return it->channelOffset;
-		}
-		/*else
-			cout<<"inactive "<<nodeId<<endl;*/
+		if(randomVertical.timeslot == timeslot)
+			return randomVertical.channelOffset;
 	}
 	
+	if(method == RANDOMHORIZONTAL)
+	{
+		if(randomHorizontal.timeslot == timeslot)
+			return randomHorizontal.channelOffset;
+	}
+	
+	if(method == PLOSS_SCENARIO || method == OPTIMUM)
+	{
+		//search if there is a link with that timeslot
+		for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it) 
+		{
+			if(it -> timeslot == timeslot)
+			{
+				//cout<<"active "<<nodeId<<endl;
+				return it->channelOffset;
+			}
+			/*else
+				cout<<"inactive "<<nodeId<<endl;*/
+		}
+	}
 	return -1;
 }
 
@@ -175,11 +191,48 @@ void advNode::setSynchronization(bool advertiserSynchronized)
 {
 	synchronized = advertiserSynchronized;
 }
-
+//set the type of advertiser node, it can be coordinator or advertiser
 void advNode::setType(int t)
 {
 	type = t;
 }
+
+/**
+ * initialize the node advertising schema according to random horizontal or random vertical
+ */
+void advNode::initRandomAdvertising(int method, Random r)
+{
+	if(method == RANDOMHORIZONTAL)
+	{
+		if(type == COORDINATOR)
+		{
+			randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
+		}
+		else
+		{
+			//select a random timeslot
+			int timeslot = r.getNumber(N);
+			randomHorizontal.timeslot = timeslot;
+			randomHorizontal.channelOffset = 0;
+		}
+		
+	}
+	
+	if(method == RANDOMVERTICAL) 
+	{
+		if(type == COORDINATOR)
+		{
+			randomVertical.channelOffset = randomVertical.timeslot = 0;
+		}
+		else
+		{
+			int channelOffset = r.getNumber(availableChannels);
+			randomVertical.channelOffset = channelOffset;
+			randomHorizontal.timeslot = 0;
+		}
+	}
+}
+
 
 
 

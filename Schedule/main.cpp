@@ -52,6 +52,6 @@ int main(int argc, char **argv)
 	s.setPloss(ploss);
 	s.evaluate();
 	cout<<s;
-	//cout<<endl;
+	cout<<endl;
 	return 0;
 }
