@@ -53,7 +53,7 @@ void Timeslot::insertActive(int asn)
 				activeNode.push_back(*it);
 			
 			
-			cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
+			//cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		}
 	}
 }
@@ -272,7 +272,7 @@ int Timeslot::timeslotManager(int m)
 	
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
-		char t;
+		//char t;
 		/*
 		 * insert active nodes in the list of active nodes
 		 * handles the ploss. In this case ploss is intended as the probability of 
@@ -281,10 +281,10 @@ int Timeslot::timeslotManager(int m)
 		insertActive(asn);
 		
 		//print the list of active channels
-		cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
-		print();
-		cin>>t;
-		cout<<endl;
+		//cout<<"\t****AbsoluteSequenceNumber: "<<asn<<"****"<<endl;
+		//print();
+		//cin>>t;
+		//cout<<endl;
 		/*
 		 * In every considered schemas the listener becomes active at a certain slot
 		 * and remain active on the same channel until a match is found
@@ -303,6 +303,8 @@ int Timeslot::timeslotManager(int m)
 		asn++;
 		
 	}
+	
+	eraseNeighbours();
 	
 	//if the method is fixed then the measure is performed in slotframe 
 	if(method == FIXEDSCHEMA) 
@@ -410,10 +412,12 @@ void Timeslot::setNodesCollisionProbability()
  */
 bool Timeslot::solveDifferentCollisions()
 {
+	
 	int transmittingNodes = 0;
-	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	for(list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
 	{
 		int genNumb = it -> generateNumber(it -> getColliders(), rand);
+		//cout << it -> getNodeID() << ": " << genNumb <<endl;
 		if(genNumb == TRANSMISSIONFLAG)
 			transmittingNodes++;
 	}
@@ -422,6 +426,12 @@ bool Timeslot::solveDifferentCollisions()
 	else
 		return false;
 	
-	
 }
+
+void Timeslot::eraseNeighbours()
+{
+	neighbours.erase(neighbours.begin(), neighbours.end());
+	//cout << "Size:" << neighbours.size() << endl;
+}
+
 

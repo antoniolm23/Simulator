@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 			node.insertLinks(advertisingCells);
 			
 			//generate node position, check if the position is already occupied
-			position p = generatePosition(squareSide, random, advNodes);
+			position p = generatePosition(squareSide + 1, random, advNodes);
 			node.setPosition(p);
 
 			cout << "Positions: " << p.x << "\t" << p.y << endl;
@@ -256,6 +256,7 @@ int main(int argc, char **argv)
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
 		{
+				
 			bool acceptable = false;
 			while(!acceptable) 
 			{
@@ -268,11 +269,17 @@ int main(int argc, char **argv)
 			}
 			
 			cout<<"listener: "<< listener.xPos << "\t" << listener.yPos << endl;
+			char t;
+			cin>>t;
+			cout<<endl;
+			
 			
 			//timeslot.addListener(listener);
 			for(int c = 0; c < iterations; c++)
 			{
-				
+				cin>>t;
+				cout<<endl;
+			
 				//check if we need to add the probability
 				if(ploss != 0)
 					timeslot.setProbability(ploss);

@@ -142,7 +142,7 @@ void advNode::insertLinks(list< advLink > a)
 	for(list<advLink>::iterator it = a.begin(); it != a.end(); ++it)
 	{
 		advertisingLinks.push_back(*it);
-		cout <<"Scheduling: " << it -> channelOffset << '\t' <<it -> timeslot<<endl;
+		//cout <<"Scheduling: " << it -> channelOffset << '\t' <<it -> timeslot<<endl;
 	}
 }
 

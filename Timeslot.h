@@ -25,6 +25,7 @@ class Timeslot{
 	int getRandomNumber(int, int);	//sets a new random number in listNode (only with TSCH random)
 	bool allowableListener();
 	void selectNeighbours();
+	void eraseNeighbours();
 public:
 	Timeslot(Random, double, int); 
 	void addNode(advNode a);
