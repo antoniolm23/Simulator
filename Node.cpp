@@ -228,7 +228,7 @@ void advNode::initRandomAdvertising(int method, Random r)
 		{
 			int channelOffset = r.getNumber(availableChannels);
 			randomVertical.channelOffset = channelOffset;
-			randomHorizontal.timeslot = 0;
+			randomVertical.timeslot = 0;
 		}
 	}
 }

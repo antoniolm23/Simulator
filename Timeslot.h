@@ -3,6 +3,8 @@
 #include <list>
 #include <cmath>
 #include "Node.h"
+#include <vector>
+#include <algorithm>
 
 class Timeslot{
 	list<advNode> listNode; //list of nodes in the neighborhood

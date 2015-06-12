@@ -295,6 +295,7 @@ int Timeslot::timeslotManager(int m)
 		if(activeNode.size() > 0)
 		{
 			collisionSolved = solveDifferentCollisions();
+			char t;
 			//print();
 		}
 		
@@ -424,24 +425,45 @@ void Timeslot::setNodesCollisionProbability()
  */
 bool Timeslot::solveDifferentCollisions()
 {
+	
 	int transmittingNodes = 0;
+	
+	vector<int> RVusedChannels;
+	
 	for(list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
 	{
 		int genNumb = it -> generateNumber(it -> getColliders(), rand);
 		//cout << it -> getNodeID() << ": " << genNumb <<endl;
 		if(genNumb == (int)TRANSMISSIONFLAG)
+		{
 			transmittingNodes++;
+			if(method == RANDOMVERTICAL)
+			{
+				RVusedChannels.push_back(it->getAbsoluteChannel());
+			}
+		}
 	}
+	
 	if(transmittingNodes == 1)
 	{
-		//cout<<"transmission"<<endl;
 		return true;
 	}
-	else
+	
+	if(transmittingNodes > 1 && method == RANDOMVERTICAL)
 	{
+		bool collision = false;
+		
+		//counting collisions on the same channel
+		for(vector<int>::iterator it = RVusedChannels.begin(); it != RVusedChannels.end(); ++it)
+		{
+			int countCollision = count(RVusedChannels.begin(), RVusedChannels.end(), *it);
+			if(countCollision > 1)
+				collision = true;
+		}
+		return collision;
+	}
 		//cout<<"DiffCollision:" <<transmittingNodes<<endl;
 		return false;
-	}
 	
 }
 

@@ -144,7 +144,7 @@ list<advLink> Schedule::computeSchedule()
 	 */
 	for(int i = 1; i < totAdvertiser; i++) 
 	{
-		cout<<distance<<endl;
+		//cout<<distance<<endl;
 		cellInSuperframe.push_back(distance);
 		if(restDivision) {
 			tmp = step;
@@ -152,7 +152,7 @@ list<advLink> Schedule::computeSchedule()
 			cycle -= tmp;
 			tmp = cycle / (totAdvertiser - i);
 			step = computePerformance(tmp, cycle, totAdvertiser - i);
-			cout<<"stepSize: "<<step<<"\tcycle: "<<cycle<<'\t'<<tmp<<endl;
+			//cout<<"stepSize: "<<step<<"\tcycle: "<<cycle<<'\t'<<tmp<<endl;
 		}
 		
 		//compute the assigned timeslot
@@ -268,6 +268,6 @@ void Schedule::evaluate()
 	}
 	//END COMPUTE SUMS
 	
-	cout<<"Fploss"<<ploss<<":\t"<<sum/tmp<<endl;
+	//cout<<"Fploss"<<ploss<<":\t"<<sum/tmp<<endl;
 }
 

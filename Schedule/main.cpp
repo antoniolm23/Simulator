@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <list>
+#include <cmath>
 #include <stdlib.h>
 #include "schedule.h"
 
@@ -15,39 +16,47 @@ using namespace std;
 int main(int argc, char **argv) 
 {
 	char c;
-	int ts = 3;		//# of timeslots
-	int nc = 5;		//# of channels
-	int na = 3;		//# of advertisers
-	double ploss = 0.3; //ploss probability
+	int timeslots = 3;		//# of timeslots
+	int numberChannels = 5;		//# of channels
+	int numberAdvertiser = 3;		//# of advertisers
+	int neighbours = 0;
+	double ploss = 0.0; //ploss probability
 	/*
 	 * this is the parsing of passed arguments:
 	 * t is the number of timeslots per slotframe
 	 * c is the numer of channels used
 	 * a is the number of advertiser cell that can be used
 	 */
-	while((c = getopt(argc, argv, "t:c:a:p:")) != -1) 
+	while((c = getopt(argc, argv, "t:c:a:p:n:")) != -1) 
 	{
 		switch(c)
 		{
 			case 't':
-				ts = atoi(optarg);
+				timeslots = atoi(optarg);
 				break;
 			case 'c':
-				nc = atoi(optarg);
+				numberChannels = atoi(optarg);
 				break;
 			case 'a':
-				na = atoi(optarg);
+				numberAdvertiser = atoi(optarg);
 				break;
 			case 'p':
 				ploss = atof(optarg);
+				break;
+			case 'n':
+				neighbours = atof(optarg);
 				break;
 			case '?':
 				cout<<"Argument not expected\n";
 				break;
 		}
 	}
-	
-	schedule s(ts, nc, na);
+	double tmpNeighbours = neighbours;
+	double avoidCollision = tmpNeighbours * (1/tmpNeighbours) * 
+			pow( ((tmpNeighbours - 1)/tmpNeighbours), neighbours - 1 ); 
+	ploss = 1 - (avoidCollision * (1 - ploss)); 
+	cout<<avoidCollision<<endl;
+	schedule s(timeslots, numberChannels, numberAdvertiser);
 	s.computeSchedule();
 	s.setPloss(ploss);
 	s.evaluate();

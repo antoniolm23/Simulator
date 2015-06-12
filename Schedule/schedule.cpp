@@ -109,7 +109,7 @@ int schedule::computePerformance(int dist, int cycle, int adv) {
  * so that each node knows the timeslot to use and the 
  * channel offset to use
  */
-list<timeslot> schedule::computeSchedule()
+void schedule::computeSchedule()
 {
 	
 	bool restDivision = false;
@@ -168,7 +168,7 @@ list<timeslot> schedule::computeSchedule()
 		distance += step;
 	}
 	
-	return scheduling;
+	//return scheduling;
 	
 }
 
