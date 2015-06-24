@@ -102,6 +102,9 @@ bool Timeslot::compareChannel(int timeslotOn)
 	
 	correctTransmission = idTransmitters.size();
 	
+	if(correctTransmission < 1)
+		return false;
+	
 	if(correctTransmission == 1)
 	{
 		//cout<<"transmission"<<endl;
@@ -129,12 +132,12 @@ bool Timeslot::lookforCollision(list<int> idTransmitters)
 		//if the node is active check in its communication range
 		if(it -> getTransmittingState())
 		{
-			cout << "ActiveNode: " << it -> getNodeID() << endl;
-			cout << "Neighbours: ";
+			//cout << "ActiveNode: " << it -> getNodeID() << endl;
+			//cout << "Neighbours: ";
 			//for each possible id check if the node is in the neighborhood
 			for(list<int>::iterator jt = idTransmitters.begin(); jt != idTransmitters.end(); ++jt)
 			{
-				cout << *jt << '\t';
+				//cout << *jt << '\t';
 				if(it -> findIdNeighbour(*jt))
 					transmitters++;
 			}
@@ -147,11 +150,9 @@ bool Timeslot::lookforCollision(list<int> idTransmitters)
 				return true;
 		}
 		
-		cout << endl;
+		//cout <<"\ttransmitters: "<<transmitters << endl;
+		transmitters = 0;
 	}
-	
-	char t;
-	cin>> t;
 	
 	return false;
 }
@@ -502,7 +503,7 @@ void Timeslot::setNodesCollisionProbability()
 		it -> setIdNeighbours(idColliders);
 		//cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
 		collision = 0;
-		idColliders.erase();
+		idColliders.clear();
 	}
 }
 
@@ -519,7 +520,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 	
 	//vector<int> usedChannels;
 	bool verticalCollision = false;
-	
+	//cout << activeNode.size() << endl;
 	for(list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
 	{
 		/**
@@ -577,6 +578,8 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 				it -> setTransmittingState(false);
 		}
 	}
+	
+	//cout << "end gen" << endl;
 	
 	//set the number of effectively transmitted EB
 	*transmittedEB = transmittingNodes;
