@@ -2,22 +2,26 @@
 #include <cstdlib>
 #include <fstream>
 #include <list>
+#include <cmath>
 #include "define.h"
 
 using namespace std;
 
 //an element of the statistics
-struct statElem
+/*struct statElem
 {
 	int timeslotNumber;	//denotes the timeslot nomber at which a "join" occurs
-	int frequency;	//denotes how many times a node takes this amount of steps
+	int frequency;	
 	int method;
-};
+};*/
 
 class Stat
 {
-	list<statElem> statsList;
-	double computeStatistic(int);
+	list<statStruct> statsList;
+	double computeMeanSlotNumber(int);
+	double computeMeanEBsent(int);
+	double computeConfidenceIntervalSlotNumber(int, double);
+	double computeConfidenceIntervalEBsent(int, double);
 	
 	int iterations;
 public:

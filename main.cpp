@@ -70,12 +70,12 @@ string convertInt(int t)
  * -s schema used e.g. A0C1 
  * -p ploss probability
  * -t transmission range
- * -q square side
- * -o # of topologies to generate per # of schema
+ * -S square side
+ * -T # of topologies to generate per # of schema
  * -y synchronization
  * -f configurationFile in order to enable the possibility of using a configuration file too
- * -b advertising cells to be used
- * -z possible listener positions
+ * -C advertising cells to be used
+ * -P possible listener positions
  */
 int main(int argc, char **argv) 
 {
@@ -89,16 +89,16 @@ int main(int argc, char **argv)
 	int transmissionRange = 20;
 	int squareSide = 20;
 	int topologiesToGenerate = 50;
-	int advertisers = 10;
+	int numberAdvertisers = 10;
 	bool advertiserSynchronized = true;
 	bool configurationFile = false;
-	int numberAdvertisingCells = 3;
+	int numberAdvertisingCells = 0;
 	string nameOfSchema = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:q:o:y:f:b:z:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:f:C:P:")) != -1) 
 	{
 		switch(c)
 		{
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 				iterations = atoi(optarg);
 				break;
 			case 'a':
-				advertisers = atoi(optarg);
+				numberAdvertisers = atoi(optarg);
 				break;
 			case 'c':
 				advertiserChannels = atoi(optarg);
@@ -128,10 +128,10 @@ int main(int argc, char **argv)
 			case 't':
 				transmissionRange = atoi(optarg);
 				break;
-			case 'q':
+			case 'S':
 				squareSide = atoi(optarg);
 				break;
-			case 'o':
+			case 'T':
 				topologiesToGenerate = atoi(optarg);
 				break;
 			case 'y':
@@ -140,10 +140,10 @@ int main(int argc, char **argv)
 			case 'f':
 				configurationFile = atoi(optarg);
 				break;
-			case 'b':
+			case 'C':
 				numberAdvertisingCells = atoi(optarg);
 				break;
-			case 'z':
+			case 'P':
 				numberListenerPositions = atoi(optarg);
 				break;
 			case '?':
@@ -152,6 +152,27 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	/**
+	 * If the nubmer of advertising cells is not defined, select a number of advertising cells 
+	 * according to nodes density
+	 */
+	if(numberAdvertisingCells == 0)
+	{
+		double transmissionArea = pow(transmissionRange, 2) * M_PI;
+		double squareArea = pow(squareSide, 2);
+		double density = numberAdvertisers / squareArea;
+		cout << squareArea << '\t' << numberAdvertisers << '\t' << density <<endl;
+		numberAdvertisingCells = (int) floor(transmissionArea * density);
+		
+		//error checking
+		if(numberAdvertisingCells < 2)
+			numberAdvertisingCells = 2;
+		if(numberAdvertisingCells > 101)
+			numberAdvertisingCells = 101;
+		
+		cout << "density: " << density << "\ttransmissionArea: " << transmissionArea 
+			<< "\tnumberAdvertisingCells: " << numberAdvertisingCells << endl;
+	}
 	if(listenerChannels > advertiserChannels)
 		listenerChannels = advertiserChannels;
 	//cout<<N<<endl;
@@ -161,12 +182,10 @@ int main(int argc, char **argv)
 	random.init();
 	
 	//create list of advertisers
-	list<advNode> advNodes;
+	list<advNode> advNodes = list<advNode>();
 	
-	//list of statistics
+	//needed objects
 	Stat statistics;
-	Timeslot timeslot = Timeslot(random, transmissionRange, listenerChannels);
-	listenerNode listener;
 	
 	//BEGIN comments
 // 	if(configurationFile)
@@ -235,16 +254,19 @@ int main(int argc, char **argv)
 	//cout << schedule << endl;
 	for(int j = 0; j < topologiesToGenerate; j++)
 	{
-		//cout << "step: " << j << endl;
+		Timeslot timeslot = Timeslot(random, transmissionRange, listenerChannels);
+		listenerNode listener;
+	
+		cout << "step " << j << endl;
 		/*** b ***/
 		//generate advertisers
-		for(int i = 0; i < advertisers; i++)
+		for(int i = 0; i < numberAdvertisers; i++)
 		{
 			//set available channels
 			advNode node = advNode(advertiserChannels, transmissionRange);
 			
 			//insert link
-			node.insertLinks(advertisingCells);
+			node.insertLinks(advertisingCells, random);
 			
 			//generate node position, check if the position is already occupied
 			position p = generatePosition(squareSide + 1, random, advNodes);
@@ -273,7 +295,7 @@ int main(int argc, char **argv)
 			advNodes.push_back(node);
 			timeslot.addNode(node);
 		}
-		saveTopology(advNodes);
+		//saveTopology(advNodes);
 		timeslot.setNodesCollisionProbability();
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
@@ -282,7 +304,7 @@ int main(int argc, char **argv)
 			bool acceptable = false;
 			while(!acceptable) 
 			{
-				//set listener properties excep its channel 
+				//set listener properties except its channel 
 				position p = generatePosition(squareSide, random, advNodes);
 				listener.xPos = p.x;
 				listener.yPos = p.y;
@@ -314,24 +336,27 @@ int main(int argc, char **argv)
 				if(ploss != 0)
 				{
 					stat.method = PLOSS_SCENARIO;
-					stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO);
+					stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO, &(stat.EBsent));
 				}
 				else
 				{
 					stat.method = OPTIMUM;
-					stat.slotNumber = timeslot.timeslotManager(OPTIMUM);
+					stat.slotNumber = timeslot.timeslotManager(OPTIMUM, &(stat.EBsent));
 				}
 				statistics.statInsert(stat);
 				
 				//statistic for randomhorizontal
 				stat.method = RANDOMHORIZONTAL;
-				stat.slotNumber = timeslot.timeslotManager(RANDOMHORIZONTAL);
+				stat.slotNumber = timeslot.timeslotManager(RANDOMHORIZONTAL, &(stat.EBsent));
 				statistics.statInsert(stat);
 				
 				//statistic for randomvertical
 				stat.method = RANDOMVERTICAL;
-				stat.slotNumber = timeslot.timeslotManager(RANDOMVERTICAL);
+				stat.slotNumber = timeslot.timeslotManager(RANDOMVERTICAL, &(stat.EBsent));
 				statistics.statInsert(stat);
+				//char t;
+				//cin>>t;
+				//cout<<"method computed"<<endl;
 			}
 			
 		}
@@ -341,7 +366,7 @@ int main(int argc, char **argv)
 	}
 	
 	if(nameOfSchema.compare("") == 0 )
-		nameOfSchema = "adv" + convertInt(advertisers) + "sq" + convertInt(squareSide);
+		nameOfSchema = "adv" + convertInt(numberAdvertisers) + "sq" + convertInt(squareSide);
 	
 	//compute and print statistics
 	statistics.setIterations(iterations * numberListenerPositions * topologiesToGenerate);

@@ -9,6 +9,9 @@ advNode::advNode(int tc, double r)
 	availableChannels = tc;
 	state = true;
 	radius = r;
+	verticalCase = false;
+	transmittingState = false;
+	idNeighbours = list<int>();
 }
 
 /**
@@ -151,15 +154,72 @@ void advNode::setNodeID(int id)
 
 /**
  * Function to insert the list of advertising links for each advertising node
- * @param: the list of advertising links
+ * 
+ * NOTE: hanldes the cases in which the optimal case uses the same timeslot with 
+ * different channelOffsets
+ * @param: the list of advertising links, random class
  */
-void advNode::insertLinks(list< advLink > a)
+void advNode::insertLinks(const list< advLink > a, Random random)
 {
-	for(list<advLink>::iterator it = a.begin(); it != a.end(); ++it)
+	
+	int possibleChannelOffsets[16];
+	int timeslot;
+	int occurrences = 0;
+	
+	list<advLink> tmp = list<advLink>(a);
+	list<int> usedTimeslots = list<int>();
+	/**
+	 * Check if the optimal schedule provides many transmission at the same
+	 * timeslot and at different channelOffset, in this case pick just one of the
+	 * possible channelOffset
+	 */
+	for(list<advLink>::const_iterator it = a.begin(); it != a.end(); ++it) 
 	{
-		advertisingLinks.push_back(*it);
-		//cout <<"Scheduling: " << it -> channelOffset << '\t' <<it -> timeslot<<endl;
+		timeslot = it->timeslot;
+		/**
+		 * if a new timeslot is detected, and only in that case, 
+		 * check if multiple channelOffsets are used
+		 */ 
+		if(find(usedTimeslots.begin(), usedTimeslots.end(), timeslot) == usedTimeslots.end())
+		{
+			usedTimeslots.push_front(timeslot);
+			for(list<advLink>::iterator jt = tmp.begin(); jt != tmp.end(); ++jt)
+			{
+				list<advLink>::iterator eraseIt = jt;
+				/**
+				* all equal timeslot will form a list from which each node picks its 
+				*/
+				if(timeslot == jt -> timeslot)
+				{
+					possibleChannelOffsets[occurrences] = jt->channelOffset;
+					occurrences++;
+				}
+			}
+			
+			//pick the chosen channel offset and add it to the list
+			if(occurrences > 1)
+			{
+				int ts = random.getNumber(occurrences);
+				int chosenChannelOffset = possibleChannelOffsets[ts];
+				insertLink(chosenChannelOffset, timeslot);
+				verticalCase = true;
+				verticalCollision = occurrences;
+				//cout << verticalCollision << endl;
+			}
+			
+			//otherwise insert link in the list
+			else
+			{
+				insertLink(it -> channelOffset, it -> timeslot);
+			}
+			occurrences = 0;
+		}
 	}
+	
+	//delete everything
+	usedTimeslots.clear();
+	tmp.clear();
+	
 }
 
 //return single coordinates of the node position
@@ -202,6 +262,7 @@ void advNode::setType(int t)
  */
 void advNode::initRandomAdvertising(int method, Random r)
 {
+	/*Initialization according to RandomHorizontal schema*/
 	if(method == RANDOMHORIZONTAL)
 	{
 		if(type == COORDINATOR)
@@ -218,6 +279,7 @@ void advNode::initRandomAdvertising(int method, Random r)
 		
 	}
 	
+	/*initialization according to RandomVertical schema*/
 	if(method == RANDOMVERTICAL) 
 	{
 		if(type == COORDINATOR)
@@ -230,10 +292,63 @@ void advNode::initRandomAdvertising(int method, Random r)
 			randomVertical.channelOffset = channelOffset;
 			randomVertical.timeslot = 0;
 		}
+		
+		//cout << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
 	}
 }
 
 
+/**
+ * print the list of links used by the node
+ */
+void advNode::printLinks()
+{
+	for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it)
+	{
+		cout << it ->timeslot << ":\t" << it->channelOffset << endl;
+	}
+}
 
+/**
+ * generate a random number between 0 and 1
+ */
+double advNode::generateNumber01(Random random)
+{
+	return random.getNumber01();
+}
 
+/**
+ * Set the list of the id of neighbours, useful in case of 
+ * collision to detect if the colliding nodes are in mutual communication range
+ * @param: the various IDs 
+ */  
+void advNode::setIdNeighbours(list<int> ids)
+{
+	
+	for(list<int>::iterator it = ids.begin(); it != ids.end(); ++it)
+	{
+		idNeighbours.push_back(*it);
+	}
+}
 
+/**
+ * Search in the list of idNeighbour for a given id
+ * @return: true if the id is present, false otherwise
+ */
+bool advNode::findIdNeighbour(int id)
+{
+	if(idNeighbours.empty())
+		return false;
+	
+	for(list<int>::iterator it = idNeighbours.begin(); it != idNeighbours.end(); ++it)
+	{
+		if(*it == id)
+			return true;
+	}
+	return false;
+}
+
+void advNode::eraseIdNeighbours()
+{
+	idNeighbours.clear();
+}

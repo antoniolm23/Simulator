@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <list>
 #include <stdint.h>
+#include <algorithm>
+#include <vector>
 #include "define.h"
 #include "Random.h"
 using namespace std;
@@ -16,8 +18,12 @@ class advNode {
 	int nodeId;
 	
 	int colliders;
+	list<int> idNeighbours;
 	
 	int type;
+	
+	bool verticalCase;
+	double verticalCollision;
 	
 	position pos;		//position of the node
 	double radius;
@@ -28,13 +34,15 @@ class advNode {
 	advLink randomHorizontal;
 	advLink randomVertical;
 	
+	bool transmittingState;
+	
 public:
 	advNode(int ac, double);
 	int getUsedChannel(int, int);
 	int getChannelOffset(int, int);
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
-	void insertLinks(list<advLink>);
+	void insertLinks(const list< advLink >, Random );
 	int generateNumber(int, Random);
 	int getAbsoluteChannel() { return absoluteChannel; }
 	void setNodeID(int);
@@ -47,4 +55,20 @@ public:
 	void setColliders(int c) {colliders = c;}
 	int getColliders() {return colliders;}
 	void initRandomAdvertising(int, Random);
+	
+	//handling different collisions
+	void setTransmittingState(bool t) {transmittingState = t;}
+	bool getTransmittingState() {return transmittingState;}
+	
+	//handling vertical collisions
+	bool getVerticalState() {return verticalCase;}
+	double getVerticalCollision() {return verticalCollision;}
+	double generateNumber01(Random);
+	
+	void printLinks();
+	
+	//handling neighbours
+	void setIdNeighbours(list<int>);
+	bool findIdNeighbour(int);
+	void eraseIdNeighbours();
 };

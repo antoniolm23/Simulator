@@ -3,7 +3,7 @@
 /*
  * LIST OF DEFINES
  */
-#define N 23			//number of timeslots in a slotframe
+#define N 101			//number of timeslots in a slotframe
 #define CHSTART	11	//starting channel to determine the actual channel to use
 //int he fixed schema nodes transmitt only in the first timeslot
 #define FIXEDSCHEMA 1
@@ -20,6 +20,12 @@
 #define LISTENER 0
 
 #define TRANSMISSIONFLAG 0
+
+#define CONFIDENCE95 	1.96
+
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
 /**
  * This struct represents the link used to do advertising
  * a link is a couple (timeslot, channelOffset) assigned.
@@ -47,6 +53,7 @@ struct listenerNode
 //provides a timeslot counter and a method indication
 struct statStruct
 {
+	int EBsent;
 	int slotNumber;
 	int method;
 };
