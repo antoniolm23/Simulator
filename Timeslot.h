@@ -13,6 +13,8 @@ class Timeslot{
 	listenerNode listener;	//listener Channel
 	int asn;	//absolute Sequence Number
 	
+	bool printProb;
+	
 	int listenerChannels;
 	
 	Random rand;
@@ -28,7 +30,6 @@ class Timeslot{
 	bool allowableListener();
 	void selectListenerNeighbours();
 	void eraseListenerNeighbours();
-	bool lookforCollision(list< int >);
 public:
 	Timeslot(Random, double, int); 
 	void addNode(advNode a);

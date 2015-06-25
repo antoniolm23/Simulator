@@ -11,7 +11,6 @@ advNode::advNode(int tc, double r)
 	radius = r;
 	verticalCase = false;
 	transmittingState = false;
-	idNeighbours = list<int>();
 }
 
 /**
@@ -315,40 +314,4 @@ void advNode::printLinks()
 double advNode::generateNumber01(Random random)
 {
 	return random.getNumber01();
-}
-
-/**
- * Set the list of the id of neighbours, useful in case of 
- * collision to detect if the colliding nodes are in mutual communication range
- * @param: the various IDs 
- */  
-void advNode::setIdNeighbours(list<int> ids)
-{
-	
-	for(list<int>::iterator it = ids.begin(); it != ids.end(); ++it)
-	{
-		idNeighbours.push_back(*it);
-	}
-}
-
-/**
- * Search in the list of idNeighbour for a given id
- * @return: true if the id is present, false otherwise
- */
-bool advNode::findIdNeighbour(int id)
-{
-	if(idNeighbours.empty())
-		return false;
-	
-	for(list<int>::iterator it = idNeighbours.begin(); it != idNeighbours.end(); ++it)
-	{
-		if(*it == id)
-			return true;
-	}
-	return false;
-}
-
-void advNode::eraseIdNeighbours()
-{
-	idNeighbours.clear();
 }

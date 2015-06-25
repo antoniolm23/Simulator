@@ -23,6 +23,10 @@
 
 #define CONFIDENCE95 	1.96
 
+#define COLLISIONRVRH 16 
+
+#define HIGHERPROB 0.9
+
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
 #endif

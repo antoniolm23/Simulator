@@ -11,6 +11,7 @@ Timeslot::Timeslot(Random r, double ra, int lc)
 	ploss = 0;
 	transmissionRange = ra;
 	listenerChannels = lc;
+	printProb = false;
 }
 /*
  * Functions to insert a node in one of the lists
@@ -94,16 +95,10 @@ bool Timeslot::compareChannel(int timeslotOn)
 		{
 			if(it->getAbsoluteChannel() == listener.channelUsed)
 			{
-				//save IDs of transmitting nodes 
-				idTransmitters.push_back(it -> getNodeID());
+				correctTransmission++;
 			}
 		}
 	}
-	
-	correctTransmission = idTransmitters.size();
-	
-	if(correctTransmission < 1)
-		return false;
 	
 	if(correctTransmission == 1)
 	{
@@ -112,52 +107,10 @@ bool Timeslot::compareChannel(int timeslotOn)
 	}
 	else
 	{
-		return lookforCollision(idTransmitters);
+		return false;
 	}
 	
 }
-
-/**
- * If there is at least a node that is the only one in its communication range 
- * that transmitts than collision is solved, otherwise we have a collision
- * @return: true if the collision is solved, false otherwise
- */
-bool Timeslot::lookforCollision(list<int> idTransmitters)
-{
-	//number of transmitting nodes
-	int transmitters = 0;
-	
-	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
-	{
-		//if the node is active check in its communication range
-		if(it -> getTransmittingState())
-		{
-			//cout << "ActiveNode: " << it -> getNodeID() << endl;
-			//cout << "Neighbours: ";
-			//for each possible id check if the node is in the neighborhood
-			for(list<int>::iterator jt = idTransmitters.begin(); jt != idTransmitters.end(); ++jt)
-			{
-				//cout << *jt << '\t';
-				if(it -> findIdNeighbour(*jt))
-					transmitters++;
-			}
-			
-			/**
-			 * if there is just one transmitter in both communication ranges:
-			 * listener and advertiser node, everything is ok
-			 */ 
-			if(transmitters == 1)
-				return true;
-		}
-		
-		//cout <<"\ttransmitters: "<<transmitters << endl;
-		transmitters = 0;
-	}
-	
-	return false;
-}
-
-
 
 void Timeslot::print()
 {
@@ -352,6 +305,9 @@ int Timeslot::timeslotManager(int m, int* transmittedEB)
 	
 	//until a match hasn't been found increment absolute sequence number and look for a match
 	while(!matchFound) {
+		
+		//cout<< "*******\tasn: "<<asn<<"\t*******\n";
+		
 		bool transmitterPresent = false;
 		/*
 		 * insert active nodes in the list of active nodes
@@ -382,6 +338,7 @@ int Timeslot::timeslotManager(int m, int* transmittedEB)
 			if(compareChannel(asn))  
 			{
 				matchFound = true;
+				//cout << "matchFound\n";
 			}
 		eraseActive();
 		asn++;
@@ -480,8 +437,6 @@ void Timeslot::selectListenerNeighbours()
 void Timeslot::setNodesCollisionProbability()
 {
 	
-	list<int> idColliders = list<int>();
-	
 	int collision = 0;
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++ it) 
 	{
@@ -494,16 +449,11 @@ void Timeslot::setNodesCollisionProbability()
 			
 			//check if nodes may collide
 			if(distance < transmissionRange)
-			{
 				collision++;
-				idColliders.push_back(jt->getNodeID());
-			}
 		}
 		it -> setColliders(collision);
-		it -> setIdNeighbours(idColliders);
 		//cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
 		collision = 0;
-		idColliders.clear();
 	}
 }
 
@@ -518,6 +468,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 	
 	int transmittingNodes = 0;
 	
+	int genNumb = 0; 
 	//vector<int> usedChannels;
 	bool verticalCollision = false;
 	//cout << activeNode.size() << endl;
@@ -536,11 +487,10 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			
 			/**
 			 * If there are more used cells than neighbours, so probCollision 
-			 * is higher than one, fix the collisionProbability to 1 / verticalCells
-			 * where vertical cells is the number of cells put in vertical
+			 * is higher than one, fix the collisionProbability a constant, if this
+			 * number is higher than one this means that we have a very sparse topology,
+			 * to avoid locks, the constant is very high
 			 */
-			if(probCollision >= 1)
-				probCollision = 1 / it -> getVerticalCollision();
 			double generatedNumber01 = it -> generateNumber01(rand);
 			//cout << probCollision << "\t" << generatedNumber01 << endl;
 			if(generatedNumber01 < probCollision)
@@ -563,7 +513,29 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		 */
 		else
 		{
-			int genNumb = it -> generateNumber(it -> getColliders(), rand);
+			if(method == OPTIMUM)
+			{
+				/**
+				 * Control to avoid an always transmitting node.
+				 * NOTE: TRANSMISSIONFLAG is equal to 0, that's why this works
+				 */
+				if(it -> getColliders() == 1)
+				{
+					if(it->generateNumber01(rand) < HIGHERPROB)
+					{
+						genNumb = TRANSMISSIONFLAG;
+					}
+					else
+					{
+						genNumb = TRANSMISSIONFLAG + 1;
+					}
+				}
+				else
+					genNumb = it -> generateNumber(it -> getColliders(), rand);
+			}
+		
+			else
+				genNumb = it -> generateNumber(COLLISIONRVRH, rand);
 			//cout << it -> getNodeID() << ": " << genNumb <<endl;
 			if(genNumb == (int)TRANSMISSIONFLAG)
 			{
@@ -577,10 +549,10 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			else
 				it -> setTransmittingState(false);
 		}
+		
 	}
 	
-	//cout << "end gen" << endl;
-	
+	printProb = true;
 	//set the number of effectively transmitted EB
 	*transmittedEB = transmittingNodes;
 	

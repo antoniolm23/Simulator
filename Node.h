@@ -18,7 +18,6 @@ class advNode {
 	int nodeId;
 	
 	int colliders;
-	list<int> idNeighbours;
 	
 	int type;
 	
@@ -66,9 +65,4 @@ public:
 	double generateNumber01(Random);
 	
 	void printLinks();
-	
-	//handling neighbours
-	void setIdNeighbours(list<int>);
-	bool findIdNeighbour(int);
-	void eraseIdNeighbours();
 };
