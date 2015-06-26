@@ -1,6 +1,27 @@
 #include "Timeslot.h"
 
 /**
+ * Given cardinal position checks if two motes are or not neighbours
+ * basing on the transmissionRange
+ * @param: cardinal position of node a and of node b, the transmission range
+ * @return: possible constant: OCCUPIED, INTXRANGE, AVAILABLEPOS 
+ */
+int checkNeighbours(int aPosX, int aPosY, int bPosX, int bPosY, int transmissionRange)
+{
+	int dX = (aPosX - bPosX) * (aPosX - bPosX);
+	int dY = (aPosY - bPosY) * ( aPosY - bPosY);
+	double distance = sqrt((dX) + dY );
+	//cout<<distance<<endl;
+	if(distance < transmissionRange && distance != 0)
+		return INTXRANGE;
+	if(distance != 0)
+		return AVAILABLEPOS;
+	if(distance == 0)
+		return OCCUPIED;
+	return ERROR;
+}
+
+/**
  * Constructor
  * @param: the random class, the transmission range, the listener channel 
  */
@@ -12,9 +33,12 @@ Timeslot::Timeslot(Random r, double ra, int lc)
 	transmissionRange = ra;
 	listenerChannels = lc;
 	printProb = false;
+	listenersList = list<listenerNode>();
 }
 /*
  * Functions to insert a node in one of the lists
+ * NOTE: checking the correctness of the position is not necessary since this operation
+ * is performed in the main
  */
 void Timeslot::addNode(advNode a)
 {
@@ -23,15 +47,14 @@ void Timeslot::addNode(advNode a)
 }
 
 /**
- * From the list of all the neighbours nodes,
- * extract only the active nodes in that timeslot
+ * From the list of all nodes, extract only the active nodes in that timeslot
  * @param: absolute sequence number
  */
 void Timeslot::insertActive(int asn)
 {
 	int channelUsed;
-	for( list<advNode>::iterator it = listenerNeighbours.begin(); 
-		it != listenerNeighbours.end(); ++it  )
+	for( list<advNode>::iterator it = listNode.begin(); 
+		it != listNode.end(); ++it  )
 	{
 		//cout<<"ListNode: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		//if node active then add a record in the list
@@ -54,27 +77,16 @@ void Timeslot::insertActive(int asn)
 			
 			else 
 				activeNode.push_back(*it);
-			
-			
-			//cout<<"Active: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
+			//cout<<"Active: "<<it->getNodeID()<<"\n";
 		}
 	}
-}
-
-/**
- * adds the listener channel
- * @params: listener channel without ChannelStart
- */
-void Timeslot::setListenerChannel(int l)
-{
-	listener.channelUsed = l + CHSTART;
 }
 
 /**
  * searches for a match throughout the list of advertisers
  * Taking care of collisions too
  */ 
-bool Timeslot::compareChannel(int timeslotOn)
+bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 {
 	
 	int correctTransmission = 0;
@@ -89,10 +101,14 @@ bool Timeslot::compareChannel(int timeslotOn)
 	{
 		//cout << it -> getNodeID() <<" ABS ch: " << it -> getAbsoluteChannel() << endl;
 		/**
-		 * check if node is active, then check if the channel is correct
+		 * check if node is active and the listener is in its transmitting range
+		 * then check if the channel is correct
 		 */
-		if(it -> getTransmittingState())
+		if(it -> getTransmittingState() && (
+			checkNeighbours(it->getPosX(), it->getPosY(), 
+			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE))
 		{
+			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
 			if(it->getAbsoluteChannel() == listener.channelUsed)
 			{
 				correctTransmission++;
@@ -114,7 +130,6 @@ bool Timeslot::compareChannel(int timeslotOn)
 
 void Timeslot::print()
 {
-	cout<<listener.channelUsed<<endl;
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
 		cout<<'\t'<<it->getNodeID()<<' '<<it->getAbsoluteChannel();
@@ -127,6 +142,7 @@ void Timeslot::erase()
 {
 	listNode.clear();
 	eraseActive();
+	listenersList.clear();
 }
 
 void Timeslot::eraseActive()
@@ -266,10 +282,12 @@ bool Timeslot::solveUniformCollisions()
  * @params: method used
  * @return: framselot elapsed
  */
-int Timeslot::timeslotManager(int m, int* transmittedEB)
+int Timeslot::timeslotManager(int m, double* transmittedEB)
 {
+	unsigned int joinedSlotSum = 0;
+	
 	method = m;
-	bool matchFound = false;
+	unsigned int matchFound = 0;
 	asn = 0;
 	
 	int timeslotOn = 0;
@@ -277,14 +295,9 @@ int Timeslot::timeslotManager(int m, int* transmittedEB)
 	int tmpTransmittedEB = 0;
 	*transmittedEB = 0;
 	
+	unsigned int totListeners = listenersList.size();
+	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
 	//for each node in the list checks how many colliders are there
-	/*
-	 * Even though in RandomHorizontal or RandomVertical 
-	 * the collision probability is equal to 1/availablechannel,
-	 * to have an effective comparison between the methods I 
-	 * set the same collision probability for all the methods
-	 */
-	selectListenerNeighbours();
 	
 	/*
 	* In the OPTIMUM schema and in all other schemas, a node becomes active at a certain point 
@@ -304,9 +317,7 @@ int Timeslot::timeslotManager(int m, int* transmittedEB)
 	}
 	
 	//until a match hasn't been found increment absolute sequence number and look for a match
-	while(!matchFound) {
-		
-		//cout<< "*******\tasn: "<<asn<<"\t*******\n";
+	while(matchFound < totListeners) {
 		
 		bool transmitterPresent = false;
 		/*
@@ -323,44 +334,40 @@ int Timeslot::timeslotManager(int m, int* transmittedEB)
 		//bool collisionSolved = solveUniformCollisions();
 		if(activeNode.size() > 0)
 		{
-			//cout<<"activeNodes\n";
 			transmitterPresent = solveDifferentCollisions(&tmpTransmittedEB);
 			*transmittedEB += tmpTransmittedEB;
-			char t;
 			//print();
 		}
 		
 		/**
-		 * if listener and advertiser use the same channel and 
-		 * there are no collisions then the match is found
+		 * if there is at least a transmitter, check if it uses the same channel of
+		 * one of the listeners 
 		 */
 		if(transmitterPresent)
-			if(compareChannel(asn))  
+		{
+			for(list<listenerNode>::iterator it = tmpListenersList.begin(); 
+				it != tmpListenersList.end(); ++it)
+			if(compareChannel(asn, *it))  
 			{
-				matchFound = true;
-				//cout << "matchFound\n";
+				matchFound++;
+				//throw out of the list the already joined node
+				it = tmpListenersList.erase(it);
+				
+				//insert statistic
+				joinedSlotSum += asn + 1 - timeslotOn + 1;
+				//cout << "joinedSum "<<joinedSlotSum<<endl ;
 			}
+		}
 		eraseActive();
 		asn++;
-		
 	}
+	double slotframeElapsed = asn - timeslotOn;
+	//cout<<asn<<'\t'<<timeslotOn<<'\t'<<slotframeElapsed<<'\t'<<*transmittedEB<<endl;
+	slotframeElapsed = slotframeElapsed / N;	
+	*transmittedEB = *transmittedEB / slotframeElapsed;
+	//cout<< *transmittedEB << endl;
+	return joinedSlotSum;
 	
-	eraseListenerNeighbours();
-	
-	//if the method is fixed then the measure is performed in slotframe 
-	if(method == FIXEDSCHEMA) 
-	{
-		int ratio = (asn / N) + 1;
-		return ratio;
-	}
-		
-	//otherwise return the number of timeslot elapsed
-	else
-	{
-		int ret = asn - timeslotOn + 1;
-		//cout<<"return value: "<<ret<<endl; 
-		return ret;
-	}
 }
 
 /**
@@ -380,54 +387,48 @@ void Timeslot::setProbability(double p)
  * @param: listenerNode structure
  * @return: if the listener can be in the selected position
  */
-bool Timeslot::setListener(listenerNode l)
+bool Timeslot::addListener(listenerNode l)
 {
-	listener.channelUsed = l.channelUsed;
-	listener.xPos = l.xPos;
-	listener.yPos = l.yPos;
-	return allowableListener();
+	if(allowableListener(l) == true)
+	{
+		listenersList.push_back(l);
+		return true;
+	}
+	else
+		return false;
 }
 
 /**
  * function that checks if the listener node has at least one neighbour
  * then insert the neighbours in the list neighbours so that 
  * we reduce the number of nodes that need to be simulated
+ * @param: listenerNode structure
  * @return: true if the listener can be in that position, false otherwise 
  */
-bool Timeslot::allowableListener()
+bool Timeslot::allowableListener(listenerNode listener)
 {
+	bool okPosition = false;
+	bool inTransmissionRange = false;
+	int result;
+	
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
 	{
-		int dX = (it ->getPosX() - listener.xPos) * (it -> getPosX() - listener.xPos);
-		int dY = (it ->getPosY() - listener.yPos) * (it -> getPosY() - listener.yPos);
-		double distance = sqrt((dX) + dY );
+		result = checkNeighbours(listener.xPos, listener.yPos, it -> getPosX(), 
+								 it -> getPosY(), transmissionRange);
+		if(result == INTXRANGE)
+			inTransmissionRange = true;
+		if(result == AVAILABLEPOS)
+			okPosition = true;
+		if(result == OCCUPIED)
+			return false;
 		
-		if(distance < transmissionRange && distance != 0)
-			return true;
 	}
-	//cout<<"wrong pos\n";
-	return false;
-}
-
-/**
- * Select the list of neighbours of the listener
- * In this way I save simulation time since I don't have to check every time every node
- */
-void Timeslot::selectListenerNeighbours()
-{
-	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	if(okPosition == true && inTransmissionRange == true)
 	{
-		int dX = (it ->getPosX() - listener.xPos) * (it -> getPosX() - listener.xPos);
-		int dY = (it ->getPosY() - listener.yPos) * (it -> getPosY() - listener.yPos);
-		double distance = sqrt((dX) + dY );
-			
-		if(distance < transmissionRange)
-		{
-			listenerNeighbours.push_back(*it);
-			//cout << it -> getNodeID() << " " 
-			//<< it -> getPosX() << "\t" << it -> getPosY() << endl;
-		}
+		return true;
 	}
+	else
+		return false;
 }
 
 /**
@@ -436,19 +437,16 @@ void Timeslot::selectListenerNeighbours()
  */
 void Timeslot::setNodesCollisionProbability()
 {
-	
+	int result;
 	int collision = 0;
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++ it) 
 	{
 		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
 		{
 			//computing distance between nodes
-			int dX = (it ->getPosX() - jt -> getPosX()) * (it -> getPosX() - jt -> getPosX());
-			int dY = (it ->getPosY() - jt -> getPosY()) * (it -> getPosY() - jt -> getPosY());
-			double distance = sqrt((dX) + dY );
-			
-			//check if nodes may collide
-			if(distance < transmissionRange)
+			result = checkNeighbours(it -> getPosX(), it -> getPosY(), 
+				jt->getPosX(), jt->getPosY(), transmissionRange);
+			if(result == INTXRANGE || result == OCCUPIED)
 				collision++;
 		}
 		it -> setColliders(collision);
@@ -470,7 +468,6 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 	
 	int genNumb = 0; 
 	//vector<int> usedChannels;
-	bool verticalCollision = false;
 	//cout << activeNode.size() << endl;
 	for(list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it)
 	{
@@ -482,7 +479,6 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		 */
 		if(it -> getVerticalState() && method == OPTIMUM) 
 		{
-			verticalCollision = it -> getVerticalState();
 			double probCollision = it -> getVerticalCollision() / it -> getColliders();
 			
 			/**
@@ -565,10 +561,5 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		return true;
 }
 
-void Timeslot::eraseListenerNeighbours()
-{
-	listenerNeighbours.clear();
-	//cout << "Size:" << neighbours.size() << endl;
-}
 
 

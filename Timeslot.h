@@ -8,9 +8,8 @@
 
 class Timeslot{
 	list<advNode> listNode; //list of nodes in the neighborhood
-	list<advNode> listenerNeighbours;
 	list<advNode> activeNode;	//list of active nodes in that timeslot
-	listenerNode listener;	//listener Channel
+	list<listenerNode> listenersList;	//listener Channel
 	int asn;	//absolute Sequence Number
 	
 	bool printProb;
@@ -27,18 +26,15 @@ class Timeslot{
 	void eraseActive();	//erase the list of active nodes
 	void insertActive(int); //inserts active nodes in the list
 	int getRandomNumber(int, int);	//sets a new random number in listNode (only with TSCH random)
-	bool allowableListener();
-	void selectListenerNeighbours();
-	void eraseListenerNeighbours();
+	bool allowableListener(listenerNode);
 public:
 	Timeslot(Random, double, int); 
 	void addNode(advNode a);
-	bool compareChannel(int);
+	bool compareChannel(int, listenerNode);
 	void print();
-	void setListenerChannel(int);
 	void erase();
-	int timeslotManager(int, int*);
+	int timeslotManager(int, double*);
 	void setProbability(double);
-	bool setListener(listenerNode);
+	bool addListener(listenerNode);
 	void setNodesCollisionProbability();
 };

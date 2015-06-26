@@ -48,7 +48,7 @@ double Stat::computeMeanSlotNumber(int method)
 		}
 	}
 	
-	ret = slotSum / iterations; 
+	ret = slotSum / TSiterations; 
 	return ret;
 }
 
@@ -73,7 +73,7 @@ double Stat::computeMeanEBsent(int method)
 		}
 	}
 	
-	ret = EBsentSum / iterations; 
+	ret = EBsentSum / EBiterations; 
 	return ret;
 }
 //prints the list of statistics on file
@@ -119,12 +119,6 @@ void Stat::print(string schema, int method)
 	myfile.close();
 }
 
-//set the number of iterations performed
-void Stat::setIterations(int it)
-{
-	iterations = it;
-}
-
 /**
  * Computes the 95% confidence interval for the average slot number required
  * @param: method used to compute the average joining time, average slot number required
@@ -141,8 +135,8 @@ double Stat::computeConfidenceIntervalSlotNumber(int method, double mean)
 			//cout<<it -> timeslotNumber<<' '<<it->frequency<<' '<<sum<<endl;
 		}
 	}
-	double stDev = sqrt(stDevSum / iterations);
-	double confidenceInterval = CONFIDENCE95 * (stDev / sqrt(iterations));
+	double stDev = sqrt(stDevSum / TSiterations);
+	double confidenceInterval = CONFIDENCE95 * (stDev / sqrt(TSiterations));
 	
 	return confidenceInterval;
 }
@@ -163,8 +157,8 @@ double Stat::computeConfidenceIntervalEBsent(int method, double mean)
 			//cout<<it -> timeslotNumber<<' '<<it->frequency<<' '<<sum<<endl;
 		}
 	}
-	double stDev = sqrt(stDevSum / iterations);
-	double confidenceInterval = CONFIDENCE95 * (stDev / sqrt(iterations));
+	double stDev = sqrt(stDevSum / EBiterations);
+	double confidenceInterval = CONFIDENCE95 * (stDev / sqrt(EBiterations));
 	
 	return confidenceInterval;
 }

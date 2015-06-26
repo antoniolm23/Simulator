@@ -27,9 +27,20 @@
 
 #define HIGHERPROB 0.9
 
+#define MAXCHANNELOFFSET 16
+
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
 #endif
+
+/**
+ * retrun constant to check if the position of listener or advertiser is correct
+ */
+#define OCCUPIED 0
+#define INTXRANGE 2
+#define AVAILABLEPOS 1
+#define ERROR -1
+
 /**
  * This struct represents the link used to do advertising
  * a link is a couple (timeslot, channelOffset) assigned.
@@ -38,7 +49,7 @@
  */
 struct advLink{
 	int channelOffset;	//channel offsets used to advertise
-	int timeslot;	//timeslot in the slotframe used to do advertising
+	int timeslot;	//number of channelOffset used for this timeslot
 };
 
 struct position
@@ -57,7 +68,7 @@ struct listenerNode
 //provides a timeslot counter and a method indication
 struct statStruct
 {
-	int EBsent;
+	double EBsent;
 	int slotNumber;
 	int method;
 };

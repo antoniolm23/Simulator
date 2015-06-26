@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include "define.h"
 #include "Random.h"
 using namespace std;
@@ -11,7 +12,7 @@ using namespace std;
 //this class defines an advertiser Node or coordinator
 class advNode {
 	
-	list<advLink> advertisingLinks;	//list of links used to do advertising
+	map<int, list<int> > advertisingLinks;	//list of links used to do advertising
 	int availableChannels;	//channels available
 	bool state;			//state of the advertiser node (active or not)
 	int absoluteChannel;
@@ -21,7 +22,7 @@ class advNode {
 	
 	int type;
 	
-	bool verticalCase;
+	bool verticalState;
 	double verticalCollision;
 	
 	position pos;		//position of the node
@@ -35,13 +36,15 @@ class advNode {
 	
 	bool transmittingState;
 	
+	void setVerticalState(bool) {verticalState = true;};
+	
 public:
 	advNode(int ac, double);
 	int getUsedChannel(int, int);
 	int getChannelOffset(int, int);
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
-	void insertLinks(const list< advLink >, Random );
+	void insertLinks(map<int, list<int> >);
 	int generateNumber(int, Random);
 	int getAbsoluteChannel() { return absoluteChannel; }
 	void setNodeID(int);
@@ -59,10 +62,9 @@ public:
 	void setTransmittingState(bool t) {transmittingState = t;}
 	bool getTransmittingState() {return transmittingState;}
 	
-	//handling vertical collisions
-	bool getVerticalState() {return verticalCase;}
+	//handling vertical collision
+	bool getVerticalState() {return verticalState;}
 	double getVerticalCollision() {return verticalCollision;}
 	double generateNumber01(Random);
 	
-	void printLinks();
 };

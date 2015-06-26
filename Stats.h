@@ -23,11 +23,13 @@ class Stat
 	double computeConfidenceIntervalSlotNumber(int, double);
 	double computeConfidenceIntervalEBsent(int, double);
 	
-	int iterations;
+	int TSiterations;
+	int EBiterations;
 public:
 	Stat() {};
 	void statInsert(statStruct);
-	void setIterations(int);
+	void setTSIterations(int i) {TSiterations = i;}
+	void setEBIterations(int i) {EBiterations = i;}
 	void print();
 	void print(string t, int);
 };

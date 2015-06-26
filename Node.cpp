@@ -9,7 +9,7 @@ advNode::advNode(int tc, double r)
 	availableChannels = tc;
 	state = true;
 	radius = r;
-	verticalCase = false;
+	verticalState = false;
 	transmittingState = false;
 }
 
@@ -72,38 +72,28 @@ int advNode::getChannelOffset(int timeslot, int method)
 	
 	if(method == PLOSS_SCENARIO || method == OPTIMUM)
 	{
-		//search if there is a link with that timeslot
-		for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it) 
+		map<int, list<int> >::iterator it;
+		it = advertisingLinks.find(timeslot);
+		if(it != advertisingLinks.end())
 		{
-			if(it -> timeslot == timeslot)
+			if( getVerticalState() )
 			{
-				//cout<<"active "<<nodeId<<endl;
-				return it->channelOffset;
+				//cout<<"getChannelOffset\n";
+				int pos = random.getNumber( it -> second.size() );
+				list<int>::iterator listIt = it -> second.begin();
+				for(int i = 0; i < pos; i++)
+				{
+					++listIt;
+				}
+				//cout <<nodeId<< ": ChannelOffset: " << *listIt << endl;
+				return *listIt;
 			}
-			/*else
-				cout<<"inactive "<<nodeId<<endl;*/
+			else
+				return *it->second.begin();
 		}
 	}
 	return -1;
 }
-
-/**
- * Insert a new Advertising link for this node
- * @params: channelOffset, timeslot
- */
-void advNode::insertLink(int chOff, int ts)
-{
-	//create the structure
-	advLink aL;
-	aL.channelOffset = chOff;
-	aL.timeslot = ts;
-	
-	//cout<<nodeId<<" insert: "<<aL.channelOffset<<aL.timeslot<<endl;
-	
-	//insert in the list
-	advertisingLinks.push_back(aL);
-}
-
 
 /**
  * If there is a collision on a link, the node is asked to transmit with 
@@ -116,23 +106,6 @@ void advNode::insertLink(int chOff, int ts)
 int advNode::generateNumber(int max, Random r)
 {
 	return r.getNumber(max); 
-	/*
-	* For this test purposes we will use the tsch random generator 
-	* function
-	*/
-	/*int tmp;
-	//cout<<"nextR: "<<nextRandom<<endl;
-	this->nextRandom = this->nextRandom * 1103515245 + 12345;
-	//this->next = tmp2;
-	//cout<<"tmp2: "<<this->nextRandom<<endl;
-	tmp = ((this->nextRandom / 65536) % 32768);
-	tmp = tmp % max;
-	//cout<<"tmp: "<<tmp<<endl;
-	//setNext(tmp2);
-	//cout<<"R\tgen Number: "<<tmp<<'\t'<<max<<'\t'<<this->nextRandom<<'\t'<<endl;
-	//this->nextRandom = this->nextRandom;
-	return tmp;
-	//}*/
 }
 
 void advNode::setNodeID(int id)
@@ -154,70 +127,46 @@ void advNode::setNodeID(int id)
 /**
  * Function to insert the list of advertising links for each advertising node
  * 
- * NOTE: hanldes the cases in which the optimal case uses the same timeslot with 
+ * NOTE: handles the cases in which the optimal case uses the same timeslot with 
  * different channelOffsets
  * @param: the list of advertising links, random class
  */
-void advNode::insertLinks(const list< advLink > a, Random random)
+void advNode::insertLinks(map< int, list<int> > scheduling)
 {
 	
-	int possibleChannelOffsets[16];
-	int timeslot;
-	int occurrences = 0;
+	advertisingLinks = map<int, list<int> >(scheduling);
 	
-	list<advLink> tmp = list<advLink>(a);
-	list<int> usedTimeslots = list<int>();
-	/**
-	 * Check if the optimal schedule provides many transmission at the same
-	 * timeslot and at different channelOffset, in this case pick just one of the
-	 * possible channelOffset
-	 */
-	for(list<advLink>::const_iterator it = a.begin(); it != a.end(); ++it) 
+	//check if this is a vertical scheduling
+	for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
 	{
-		timeslot = it->timeslot;
-		/**
-		 * if a new timeslot is detected, and only in that case, 
-		 * check if multiple channelOffsets are used
-		 */ 
-		if(find(usedTimeslots.begin(), usedTimeslots.end(), timeslot) == usedTimeslots.end())
+		if(it->second.size() > 1)
 		{
-			usedTimeslots.push_front(timeslot);
-			for(list<advLink>::iterator jt = tmp.begin(); jt != tmp.end(); ++jt)
-			{
-				list<advLink>::iterator eraseIt = jt;
-				/**
-				* all equal timeslot will form a list from which each node picks its 
-				*/
-				if(timeslot == jt -> timeslot)
-				{
-					possibleChannelOffsets[occurrences] = jt->channelOffset;
-					occurrences++;
-				}
-			}
-			
-			//pick the chosen channel offset and add it to the list
-			if(occurrences > 1)
-			{
-				int ts = random.getNumber(occurrences);
-				int chosenChannelOffset = possibleChannelOffsets[ts];
-				insertLink(chosenChannelOffset, timeslot);
-				verticalCase = true;
-				verticalCollision = occurrences;
-				//cout << verticalCollision << endl;
-			}
-			
-			//otherwise insert link in the list
-			else
-			{
-				insertLink(it -> channelOffset, it -> timeslot);
-			}
-			occurrences = 0;
+			verticalCollision = it->second.size();
+			setVerticalState(true);
+			return;
 		}
 	}
 	
-	//delete everything
-	usedTimeslots.clear();
-	tmp.clear();
+	/*//print to check correctness
+	cout<<"Original\n";
+	for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
+	{
+		cout<<it->first<<'\t';
+		cout<<"Size: "<<it->second.size()<<endl;
+		for(list<int>::iterator jt = it->second.begin(); jt != it -> second.end(); ++jt)
+			cout<<*jt<<'\t';
+		cout<<endl;
+	}
+	cout<<"Copy\t";
+	for(map<int, list<int> >::iterator it = advertisingLinks.begin(); 
+		it != advertisingLinks.end(); ++it )
+	{
+		cout<<it->first<<endl;
+		cout<<"Size: "<<it->second.size()<<endl;
+		for(list<int>::iterator jt = it->second.begin(); jt != it -> second.end(); ++jt)
+			cout<<*jt<<'\t';
+		cout<<endl;
+	}*/
 	
 }
 
@@ -297,16 +246,6 @@ void advNode::initRandomAdvertising(int method, Random r)
 }
 
 
-/**
- * print the list of links used by the node
- */
-void advNode::printLinks()
-{
-	for(list<advLink>::iterator it = advertisingLinks.begin(); it != advertisingLinks.end(); ++it)
-	{
-		cout << it ->timeslot << ":\t" << it->channelOffset << endl;
-	}
-}
 
 /**
  * generate a random number between 0 and 1

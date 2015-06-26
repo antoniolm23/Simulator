@@ -91,14 +91,13 @@ int main(int argc, char **argv)
 	int topologiesToGenerate = 50;
 	int numberAdvertisers = 10;
 	bool advertiserSynchronized = true;
-	bool configurationFile = false;
 	int numberAdvertisingCells = 0;
 	string nameOfSchema = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:f:C:P:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:")) != -1) 
 	{
 		switch(c)
 		{
@@ -136,9 +135,6 @@ int main(int argc, char **argv)
 				break;
 			case 'y':
 				advertiserSynchronized = atoi(optarg);
-				break;
-			case 'f':
-				configurationFile = atoi(optarg);
 				break;
 			case 'C':
 				numberAdvertisingCells = atoi(optarg);
@@ -187,59 +183,6 @@ int main(int argc, char **argv)
 	//needed objects
 	Stat statistics;
 	
-	//BEGIN comments
-// 	if(configurationFile)
-// 	{
-// 		/***Parameter setting***/
-// 		string filename = "conf.txt";
-// 		parsing p = parsing(filename);
-// 		p.doParsing();
-// 		
-// 		int id = -1;
-// 		
-// 		advNode tmp = advNode(advertiserChannels); 
-// 		
-// 		//create as many advertisers as needed and then put them in the list
-// 		while(p.getParameterSize() > 0) 
-// 		{
-// 			//cout<<"parameter size: "<<p.getParameterSize()<<"\n";
-// 			//get a new parameter
-// 			parameter pa = p.getParameter();
-// 			
-// 			//if I'm inserting a new link for a given node
-// 			if(id == pa.nodeID) 
-// 			{
-// 				tmp.insertLink(pa.chOff, pa.timeslot);
-// 			}
-// 			
-// 			//otherwise insantiate a new node
-// 			else
-// 			{
-// 				if(id != -1) 
-// 				{
-// 					advNodes.push_back(tmp);
-// 					//cout<<"node inserted\n";
-// 				}
-// 				tmp = advNode(advertiserChannels);
-// 				tmp.setNodeID(pa.nodeID);
-// 				tmp.insertLink(pa.chOff, pa.timeslot);
-// 				id = pa.nodeID;
-// 			}
-// 			
-// 		}
-// 		
-// 		advNodes.push_back(tmp);
-// 		
-// 		//Timeslot characteristics remain equal through all the iterations
-// 		
-// 		//build the list of advertisers
-// 		for( list<advNode>::iterator it = advNodes.begin(); it != advNodes.end(); ++it  )
-// 		{
-// 			timeslot.addNode(*it);
-// 		}
-// 	}
-	//END comments
-	
 	/**
 	 * If a configuration file is not used the program has to perform many things:
 	 * a) generate the optimal schema
@@ -248,7 +191,7 @@ int main(int argc, char **argv)
 	 */
 	/*** a ***/
 	/*compute the list of advertising cells to be used*/
-	list<advLink> advertisingCells = list<advLink>();
+	map<int, list<int> > advertisingCells = map<int, list<int> >();
 	Schedule schedule = Schedule(N, advertiserChannels, numberAdvertisingCells);
 	advertisingCells = schedule.computeSchedule();
 	//cout << schedule << endl;
@@ -266,7 +209,7 @@ int main(int argc, char **argv)
 			advNode node = advNode(advertiserChannels, transmissionRange);
 			
 			//insert link
-			node.insertLinks(advertisingCells, random);
+			node.insertLinks(advertisingCells);
 			
 			//generate node position, check if the position is already occupied
 			position p = generatePosition(squareSide + 1, random, advNodes);
@@ -300,6 +243,7 @@ int main(int argc, char **argv)
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
 		{
+			//cout<<"LisGen\n";
 			//generate the listener
 			bool acceptable = false;
 			while(!acceptable) 
@@ -308,68 +252,73 @@ int main(int argc, char **argv)
 				position p = generatePosition(squareSide, random, advNodes);
 				listener.xPos = p.x;
 				listener.yPos = p.y;
-				listener.channelUsed = 0;
-				acceptable = timeslot.setListener(listener);
+				listener.channelUsed = random.getNumber(listenerChannels) + CHSTART;
+				acceptable = timeslot.addListener(listener);
 			}
-			
+		}
 			//cout<<"listener: "<< listener.xPos << "\t" << listener.yPos << endl;
 			
-			//timeslot.addListener(listener);
-			for(int c = 0; c < iterations; c++)
-			{
-				//check if we need to add the probability
-				if(ploss != 0)
-					timeslot.setProbability(ploss);
-				
-				//set the listener channel
-				int channel = random.getNumber(listenerChannels);
-				timeslot.setListenerChannel(channel);
-				
-				/*
-				* via the timeslot manager gather:
-				* in the fixed schema the number of framslot elapsed
-				* in the others the number of timeslots elapsed
-				*/
-				
-				//statistic for the optimum schema
-				statStruct stat;
-				if(ploss != 0)
-				{
-					stat.method = PLOSS_SCENARIO;
-					stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO, &(stat.EBsent));
-				}
-				else
-				{
-					stat.method = OPTIMUM;
-					stat.slotNumber = timeslot.timeslotManager(OPTIMUM, &(stat.EBsent));
-				}
-				statistics.statInsert(stat);
-				
-				//statistic for randomhorizontal
-				stat.method = RANDOMHORIZONTAL;
-				stat.slotNumber = timeslot.timeslotManager(RANDOMHORIZONTAL, &(stat.EBsent));
-				statistics.statInsert(stat);
-				
-				//statistic for randomvertical
-				stat.method = RANDOMVERTICAL;
-				stat.slotNumber = timeslot.timeslotManager(RANDOMVERTICAL, &(stat.EBsent));
-				statistics.statInsert(stat);
-				//char t;
-				//cin>>t;
-				//cout<<"method computed"<<endl;
-			}
+		//timeslot.addListener(listener);
+		for(int c = 0; c < iterations; c++)
+		{
+			int tmp;
+			//char t;
+			//check if we need to add the probability
+			if(ploss != 0)
+				timeslot.setProbability(ploss);
 			
+			/*
+			* via the timeslot manager gather:
+			* in the fixed schema the number of framslot elapsed
+			* in the others the number of timeslots elapsed
+			*/
+			
+			//statistic for the optimum schema
+			statStruct stat;
+			if(ploss != 0)
+			{
+				stat.method = PLOSS_SCENARIO;
+				stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO, &(stat.EBsent));
+			}
+			else
+			{
+				stat.method = OPTIMUM;
+				tmp = timeslot.timeslotManager(OPTIMUM, &(stat.EBsent));
+				stat.slotNumber = tmp;
+				//cout<<stat.slotNumber<<'\t';
+				
+			}
+			statistics.statInsert(stat);
+			
+			//statistic for randomhorizontal
+			stat.method = RANDOMHORIZONTAL;
+			tmp = timeslot.timeslotManager(RANDOMHORIZONTAL, &(stat.EBsent));
+			stat.slotNumber = tmp;
+			statistics.statInsert(stat);
+			//cout<<stat.EBsent<<'\t';
+			
+			//statistic for randomvertical
+			stat.method = RANDOMVERTICAL;
+			tmp = timeslot.timeslotManager(RANDOMVERTICAL, &(stat.EBsent));
+			stat.slotNumber = tmp;
+			statistics.statInsert(stat);
+			//cout<<stat.slotNumber<<'\n';
+			//char t;
+			//cin>>t;
+			//cout<<"method computed"<<endl;
 		}
+		
+	
 		//free resources before generating a new topology with the same density
 		timeslot.erase();
 		advNodes.erase(advNodes.begin(), advNodes.end());
 	}
-	
 	if(nameOfSchema.compare("") == 0 )
 		nameOfSchema = "adv" + convertInt(numberAdvertisers) + "sq" + convertInt(squareSide);
 	
 	//compute and print statistics
-	statistics.setIterations(iterations * numberListenerPositions * topologiesToGenerate);
+	statistics.setTSIterations(iterations * numberListenerPositions * topologiesToGenerate);
+	statistics.setEBIterations(iterations * topologiesToGenerate);
 	statistics.print(nameOfSchema, RANDOMHORIZONTAL);
 	statistics.print(nameOfSchema, RANDOMVERTICAL);
 	statistics.print(nameOfSchema, OPTIMUM);

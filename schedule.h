@@ -1,6 +1,7 @@
 #include <list>
 #include <iostream>
 #include "define.h"
+#include <map>
 using namespace std;
 
 
@@ -19,7 +20,7 @@ class Schedule
 	int computePerformance(int, int, int);
 public:
 	Schedule(int, int, int);
-	list<advLink> computeSchedule();
+	map<int, list<int> > computeSchedule();
 	void evaluate();
 	void setPloss(double);
 };

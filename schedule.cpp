@@ -1,5 +1,6 @@
 #include "schedule.h"
 #include <math.h>
+#include <algorithm>
 /*
  * the default channel on which we try to compute the scheduling
  * is the 0 one, by means of theory we know that the schema will 
@@ -109,10 +110,11 @@ int Schedule::computePerformance(int dist, int cycle, int adv)
  * so that each node knows the timeslot to use and the 
  * channel offset to use
  */
-list<advLink> Schedule::computeSchedule()
+map<int, list<int> > Schedule::computeSchedule()
 {
 	bool restDivision = false;
 	
+	map<int, list<int> > advertisingLinks = map<int, list<int> >();
 	/* 
 	 * through theory we know that the best schema is the 
 	 * one with equi-spaced beacons
@@ -134,7 +136,6 @@ list<advLink> Schedule::computeSchedule()
 		restDivision = true;
 	}
 	
-	advLink link;
 	int step = distance;
 	tmp = 0;
 	cellInSuperframe.push_back(cycle - 1);
@@ -142,6 +143,9 @@ list<advLink> Schedule::computeSchedule()
 	/*
 	 * For each cellInSuperframe compute the originating schema
 	 */
+	//insert link 0,0
+	advertisingLinks[0].push_back(0);
+	
 	for(int i = 1; i < totAdvertiser; i++) 
 	{
 		//cout<<distance<<endl;
@@ -156,19 +160,21 @@ list<advLink> Schedule::computeSchedule()
 		}
 		
 		//compute the assigned timeslot
-		link.timeslot = computeTimeslot(distance);
+		int tmpTimeslot = computeTimeslot(distance);
 		
 		//compute the assigned channel
-		link.channelOffset = computeChannelOffset(distance);
+		int tmpChannelOffset = computeChannelOffset(distance);
+		
+		advertisingLinks[tmpTimeslot].push_back(tmpChannelOffset);
 		
 		//insert the computed timeslot in the list
-		scheduling.push_back(link);
+		//scheduling.push_back(link);
 		
 		//go to the next absolute timeslot
 		distance += step;
 	}
 	
-	return scheduling;
+	return advertisingLinks;
 	
 }
 
@@ -191,7 +197,6 @@ void Schedule::evaluate()
 	int i = 1;
 	int gaussSum = 0;
 	double sum = 0;
-	double avg = 0;
 	it = cellInSuperframe.begin();
 	
 	//BEGIN COMPUTE ETAi
