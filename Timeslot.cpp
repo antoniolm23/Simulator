@@ -6,10 +6,11 @@
  * @param: cardinal position of node a and of node b, the transmission range
  * @return: possible constant: OCCUPIED, INTXRANGE, AVAILABLEPOS 
  */
-int checkNeighbours(int aPosX, int aPosY, int bPosX, int bPosY, int transmissionRange)
+int checkNeighbours(double aPosX, double aPosY, double bPosX, 
+					double bPosY, int transmissionRange)
 {
-	int dX = (aPosX - bPosX) * (aPosX - bPosX);
-	int dY = (aPosY - bPosY) * ( aPosY - bPosY);
+	double dX = (aPosX - bPosX) * (aPosX - bPosX);
+	double dY = (aPosY - bPosY) * ( aPosY - bPosY);
 	double distance = sqrt((dX) + dY );
 	//cout<<distance<<endl;
 	if(distance < transmissionRange && distance != 0)
@@ -386,6 +387,7 @@ void Timeslot::setProbability(double p)
  * Function to set properties of the listener node
  * @param: listenerNode structure
  * @return: if the listener can be in the selected position
+ * NOTE: control performed outside
  */
 bool Timeslot::addListener(listenerNode l)
 {
@@ -411,18 +413,35 @@ bool Timeslot::allowableListener(listenerNode listener)
 	bool inTransmissionRange = false;
 	int result;
 	
+	//check compatibility with advertiser nodes
 	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
 	{
 		result = checkNeighbours(listener.xPos, listener.yPos, it -> getPosX(), 
 								 it -> getPosY(), transmissionRange);
 		if(result == INTXRANGE)
+		{
 			inTransmissionRange = true;
+			okPosition = true;
+		}
 		if(result == AVAILABLEPOS)
 			okPosition = true;
 		if(result == OCCUPIED)
 			return false;
 		
 	}
+	
+	//check compatibility with other listener nodes
+	for(list<listenerNode>::iterator it = listenersList.begin(); 
+		it != listenersList.end(); ++it)
+	{
+		result = checkNeighbours(listener.xPos, listener.yPos, it -> xPos, 
+								 it -> yPos, transmissionRange);
+		if(result == INTXRANGE || AVAILABLEPOS)
+			okPosition = true;
+		if(result == OCCUPIED)
+			return false;
+	}
+	
 	if(okPosition == true && inTransmissionRange == true)
 	{
 		return true;

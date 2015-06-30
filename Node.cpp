@@ -171,11 +171,11 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 }
 
 //return single coordinates of the node position
-int advNode::getPosX()
+double advNode::getPosX()
 {
 	return pos.x;
 }
-int advNode::getPosY()
+double advNode::getPosY()
 {
 	return pos.y;
 }
@@ -253,4 +253,17 @@ void advNode::initRandomAdvertising(int method, Random r)
 double advNode::generateNumber01(Random random)
 {
 	return random.getNumber01();
+}
+
+/**
+ * Set the number of colliders nodes
+ */
+void advNode::setColliders(int c)
+{
+	if(c > 0)
+		colliders = c;
+	else
+		colliders = 1;
+	
+	//cout<<"Colliders: "<<colliders<<'\t'<<c<<endl;
 }

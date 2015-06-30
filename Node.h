@@ -52,9 +52,9 @@ public:
 	int getNodeID() { return nodeId; }
 	void setType(int);
 	void setSynchronization(bool );
-	int getPosX();
-	int getPosY();
-	void setColliders(int c) {colliders = c;}
+	double getPosX();
+	double getPosY();
+	void setColliders(int c);
 	int getColliders() {return colliders;}
 	void initRandomAdvertising(int, Random);
 	

@@ -126,7 +126,7 @@ void Stat::print(string schema, int method)
  */
 double Stat::computeConfidenceIntervalSlotNumber(int method, double mean) 
 {
-	double stDevSum;
+	double stDevSum = 0;
 	for(list<statStruct>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
 		if(it -> method == method)
@@ -148,7 +148,8 @@ double Stat::computeConfidenceIntervalSlotNumber(int method, double mean)
  */
 double Stat::computeConfidenceIntervalEBsent(int method, double mean) 
 {
-	double stDevSum;
+	cout<<mean<<endl;
+	double stDevSum = 0;
 	for(list<statStruct>::iterator it = statsList.begin(); it != statsList.end(); ++it)
 	{
 		if(it -> method == method)
@@ -157,9 +158,11 @@ double Stat::computeConfidenceIntervalEBsent(int method, double mean)
 			//cout<<it -> timeslotNumber<<' '<<it->frequency<<' '<<sum<<endl;
 		}
 	}
+	cout<<stDevSum<<endl;
 	double stDev = sqrt(stDevSum / EBiterations);
+	cout<<stDev<<endl;
 	double confidenceInterval = CONFIDENCE95 * (stDev / sqrt(EBiterations));
-	
+	cout <<" Confidence Interval: "<<confidenceInterval << endl;
 	return confidenceInterval;
 }
 

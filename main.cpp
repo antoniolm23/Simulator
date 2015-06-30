@@ -8,30 +8,76 @@
 #include "Timeslot.h"
 #include "parameters.h"
 #include "schedule.h"
+#include "define.h"
 #include <sstream>
 
-bool search(position p, list<advNode> listAdv)
+/**
+ * Given cardinal position checks if two motes are or not neighbours
+ * basing on the transmissionRange
+ * @param: cardinal position of node a and of node b, the transmission range
+ * @return: possible constant: OCCUPIED, INTXRANGE, AVAILABLEPOS 
+ */
+/*int checkNeighbours(double aPosX, double aPosY, double bPosX, double bPosY, int transmissionRange)
 {
+	double dX = (aPosX - bPosX) * (aPosX - bPosX);
+	double dY = (aPosY - bPosY) * ( aPosY - bPosY);
+	double distance = sqrt((dX) + dY );
+	//cout<<distance<<endl;
+	if(distance < transmissionRange && distance != 0)
+		return INTXRANGE;
+	if(distance != 0)
+		return AVAILABLEPOS;
+	if(distance == 0)
+		return OCCUPIED;
+	return ERROR;
+}*/
+
+
+bool search(position p, list<advNode> listAdv, int transmissionRange)
+{
+	bool inTxRange = false;
+	bool correct = false;
 	for(list<advNode>::iterator it = listAdv.begin(); it != listAdv.end(); ++it)
 	{
-		if(p.x == it -> getPosX() && p.y == it -> getPosY())
-			return true;
+		int result;
+		result = checkNeighbours(p.x, p.y, it->getPosX(), it -> getPosY(), transmissionRange);
+		//cout<<result<<'\n';
+		
+		if(result == INTXRANGE)
+			inTxRange = true;
+		if(result == AVAILABLEPOS)
+			correct = true;
+		if(result == OCCUPIED)
+			return false;
+		
 	}
-	return false;
+	if(inTxRange == true)
+	{
+		//cout<<"Accepted\n";
+		return true;
+	}
+	else
+		return false;
 }
 
 //utility function to generate positions of advertiser nodes
-position generatePosition(int squareSide, Random random, list<advNode> listAdv)
+position generatePosition(int squareSide, Random random, 
+						  list<advNode> listAdv, int transmissionRange)
 {
 	
-	bool acceptable = true;
+	bool acceptable = false;
 	position p;
-	while(acceptable)
+	while(!acceptable)
 	{
-		p.x = random.getNumber(squareSide);
-		p.y = random.getNumber(squareSide);
-		acceptable = search(p, listAdv);
+		p.x = random.getNumber01() * squareSide;
+		p.y = random.getNumber01() * squareSide;
+		//cout<<"POS\t"<<p.x<<'\t'<<p.y<<'\n';
+		if(listAdv.size() < 1)
+			acceptable = true;
+		else
+			acceptable = search(p, listAdv, transmissionRange);
 	}
+	//cout<<"Accepted1\t"<<p.x<<'\t'<<p.y<<'\n';
 	return p;
 }
 
@@ -212,7 +258,7 @@ int main(int argc, char **argv)
 			node.insertLinks(advertisingCells);
 			
 			//generate node position, check if the position is already occupied
-			position p = generatePosition(squareSide + 1, random, advNodes);
+			position p = generatePosition(squareSide, random, advNodes, transmissionRange);
 			node.setPosition(p);
 			
 			//cout << "Positions: " << p.x << "\t" << p.y << endl;
@@ -249,7 +295,7 @@ int main(int argc, char **argv)
 			while(!acceptable) 
 			{
 				//set listener properties except its channel 
-				position p = generatePosition(squareSide, random, advNodes);
+				position p = generatePosition(squareSide, random, advNodes, transmissionRange);
 				listener.xPos = p.x;
 				listener.yPos = p.y;
 				listener.channelUsed = random.getNumber(listenerChannels) + CHSTART;

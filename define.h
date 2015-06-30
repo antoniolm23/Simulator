@@ -54,14 +54,14 @@ struct advLink{
 
 struct position
 {
-	int x;
-	int y;
+	double x;
+	double y;
 };
 
 struct listenerNode
 {
-	int xPos;
-	int yPos;
+	double xPos;
+	double yPos;
 	int channelUsed;
 };
 
@@ -72,4 +72,7 @@ struct statStruct
 	int slotNumber;
 	int method;
 };
+
+int checkNeighbours(double aPosX, double aPosY, double bPosX, 
+					double bPosY, int transmissionRange);
 #endif
