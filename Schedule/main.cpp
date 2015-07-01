@@ -21,13 +21,14 @@ int main(int argc, char **argv)
 	int numberAdvertiser = 3;		//# of advertisers
 	int neighbours = 0;
 	double ploss = 0.0; //ploss probability
+	int energy = 1;
 	/*
 	 * this is the parsing of passed arguments:
 	 * t is the number of timeslots per slotframe
 	 * c is the numer of channels used
 	 * a is the number of advertiser cell that can be used
 	 */
-	while((c = getopt(argc, argv, "t:c:a:p:n:")) != -1) 
+	while((c = getopt(argc, argv, "t:c:a:p:n:e:")) != -1) 
 	{
 		switch(c)
 		{
@@ -43,6 +44,9 @@ int main(int argc, char **argv)
 			case 'p':
 				ploss = atof(optarg);
 				break;
+			case 'e':
+				energy = atoi(optarg);
+				break;
 			case 'n':
 				neighbours = atof(optarg);
 				break;
@@ -52,10 +56,11 @@ int main(int argc, char **argv)
 		}
 	}
 	double tmpNeighbours = neighbours;
-	double avoidCollision = tmpNeighbours * (1/tmpNeighbours) * 
-			pow( ((tmpNeighbours - 1)/tmpNeighbours), neighbours - 1 ); 
-	ploss = 1 - (avoidCollision * (1 - ploss)); 
+	double avoidCollision = tmpNeighbours * (1/(tmpNeighbours * energy)) * 
+			pow( ((tmpNeighbours - 1)/(tmpNeighbours * energy)), neighbours - 1 ); 
+	ploss = 1 - (1 - avoidCollision) * (1 - ploss); 
 	cout<<avoidCollision<<endl;
+	cout<<ploss<<endl;
 	schedule s(timeslots, numberChannels, numberAdvertiser);
 	s.computeSchedule();
 	s.setPloss(ploss);

@@ -265,5 +265,5 @@ void advNode::setColliders(int c)
 	else
 		colliders = 1;
 	
-	//cout<<"Colliders: "<<colliders<<'\t'<<c<<endl;
+	cout<<"Colliders:\t"<<colliders<<'\t'<<c<<endl;
 }

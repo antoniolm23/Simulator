@@ -67,15 +67,42 @@ position generatePosition(int squareSide, Random random,
 	
 	bool acceptable = false;
 	position p;
+	
+	//select an advertiser neighbour
+	int pos = random.getNumber(listAdv.size());
+	list<advNode>::iterator it = listAdv.begin();
+	for( int i = 0; i < pos; i++)
+		++it;
+	
+	int result = 0;
+	
+	bool acceptable = false;
 	while(!acceptable)
 	{
-		p.x = random.getNumber01() * squareSide;
-		p.y = random.getNumber01() * squareSide;
-		//cout<<"POS\t"<<p.x<<'\t'<<p.y<<'\n';
-		if(listAdv.size() < 1)
+		double x = it -> getPosX();
+		double y = it -> getPosY();
+		
+		double a = random.getNumber01();
+		double b = random.getNumber01();
+		
+		
+		if (b < a)
+		{
+			double tmp = a;
+			a = b;
+			b = tmp;
+		}
+		
+		p.x = b * transmissionRange * cos(2 * M_PI * a /b) + x;
+		p.y = b * transmissionRange * sin(2 * M_PI * a / b) + y;
+		
+		result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
+		
+		if(result == INTXRANGE)
+		{
+			cout<<"correct"<<endl;
 			acceptable = true;
-		else
-			acceptable = search(p, listAdv, transmissionRange);
+		}
 	}
 	//cout<<"Accepted1\t"<<p.x<<'\t'<<p.y<<'\n';
 	return p;
@@ -122,6 +149,7 @@ string convertInt(int t)
  * -f configurationFile in order to enable the possibility of using a configuration file too
  * -C advertising cells to be used
  * -P possible listener positions
+ * -E energy factor
  */
 int main(int argc, char **argv) 
 {
@@ -141,9 +169,10 @@ int main(int argc, char **argv)
 	string nameOfSchema = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
+	int energyFactor = 1;
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:")) != -1) 
 	{
 		switch(c)
 		{
@@ -188,11 +217,16 @@ int main(int argc, char **argv)
 			case 'P':
 				numberListenerPositions = atoi(optarg);
 				break;
+			case 'E':
+				energyFactor = atoi(optarg);
+				break;
 			case '?':
 				cout<<optarg<<endl;
 				break;
 		}
 	}
+	
+	cout << energyFactor <<endl;
 	
 	/**
 	 * If the nubmer of advertising cells is not defined, select a number of advertising cells 
@@ -207,8 +241,39 @@ int main(int argc, char **argv)
 		numberAdvertisingCells = (int) floor(transmissionArea * density);
 		
 		//error checking
-		if(numberAdvertisingCells < 2)
-			numberAdvertisingCells = 2;
+		/**
+		 * if(numberAdvertisingCells < 2)
+		 * numberAdvertisingCells = 2;
+		 * numberAdvertisingCells = numberAdvertisingCells + 1;
+		 */
+		//FIXME
+		if(transmissionRange == 10)
+		{
+			if(numberAdvertisers == 5)
+				numberAdvertisingCells = 4;
+			if(numberAdvertisers == 10)
+				numberAdvertisingCells = 5;
+			if(numberAdvertisers == 20)
+				numberAdvertisingCells = 7;
+			if(numberAdvertisers == 30)
+				numberAdvertisingCells = 8;
+			if(numberAdvertisers == 40)
+				numberAdvertisingCells = 9;
+			if(numberAdvertisers == 50)
+				numberAdvertisingCells = 10;
+			if(numberAdvertisers == 75)
+				numberAdvertisingCells = 12;
+			if(numberAdvertisers == 100)
+				numberAdvertisingCells = 14;
+			if(numberAdvertisers == 125)
+				numberAdvertisingCells = 16;
+			if(numberAdvertisers == 150)
+				numberAdvertisingCells = 19;
+			if(numberAdvertisers == 200)
+				numberAdvertisingCells = 24;
+			if(numberAdvertisers == 250)
+				numberAdvertisingCells = 29;
+		}
 		if(numberAdvertisingCells > 101)
 			numberAdvertisingCells = 101;
 		
@@ -224,7 +289,7 @@ int main(int argc, char **argv)
 	random.init();
 	
 	//create list of advertisers
-	list<advNode> advNodes = list<advNode>();
+	list<advNode> tmpAdvNodes = list<advNode>();
 	
 	//needed objects
 	Stat statistics;
@@ -244,6 +309,7 @@ int main(int argc, char **argv)
 	for(int j = 0; j < topologiesToGenerate; j++)
 	{
 		Timeslot timeslot = Timeslot(random, transmissionRange, listenerChannels);
+		timeslot.setEnergyFactor(energyFactor);
 		listenerNode listener;
 	
 		cout << "step " << j << endl;
@@ -258,7 +324,7 @@ int main(int argc, char **argv)
 			node.insertLinks(advertisingCells);
 			
 			//generate node position, check if the position is already occupied
-			position p = generatePosition(squareSide, random, advNodes, transmissionRange);
+			position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
 			node.setPosition(p);
 			
 			//cout << "Positions: " << p.x << "\t" << p.y << endl;
@@ -281,7 +347,7 @@ int main(int argc, char **argv)
 			node.initRandomAdvertising(RANDOMVERTICAL, random);
 			
 			//insert nodes in lists
-			advNodes.push_back(node);
+			tmpAdvNodes.push_back(node);
 			timeslot.addNode(node);
 		}
 		//saveTopology(advNodes);
@@ -295,7 +361,7 @@ int main(int argc, char **argv)
 			while(!acceptable) 
 			{
 				//set listener properties except its channel 
-				position p = generatePosition(squareSide, random, advNodes, transmissionRange);
+				position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
 				listener.xPos = p.x;
 				listener.yPos = p.y;
 				listener.channelUsed = random.getNumber(listenerChannels) + CHSTART;
@@ -357,7 +423,7 @@ int main(int argc, char **argv)
 	
 		//free resources before generating a new topology with the same density
 		timeslot.erase();
-		advNodes.erase(advNodes.begin(), advNodes.end());
+		tmpAdvNodes.erase(tmpAdvNodes.begin(), tmpAdvNodes.end());
 	}
 	if(nameOfSchema.compare("") == 0 )
 		nameOfSchema = "adv" + convertInt(numberAdvertisers) + "sq" + convertInt(squareSide);

@@ -35,8 +35,8 @@ ostream& operator<<(ostream& ios, const schedule& s)
 {
 	list<timeslot> l = s.scheduling;
 	list<timeslot>::iterator it;
-	for( it = l.begin(); it != l.end(); ++it) 
-		ios<<"timeslot: "<< it -> ts<<"\tchannel: "<<it->nc<<"\n";
+	//for( it = l.begin(); it != l.end(); ++it) 
+		//ios<<"timeslot: "<< it -> ts<<"\tchannel: "<<it->nc<<"\n";
 	return ios;
 }
 
@@ -144,7 +144,7 @@ void schedule::computeSchedule()
 	 */
 	for(int i = 1; i < totAdvertiser; i++) 
 	{
-		cout<<distance<<endl;
+		//cout<<distance<<endl;
 		ti.push_back(distance);
 		if(restDivision) {
 			tmp = step;
@@ -152,7 +152,7 @@ void schedule::computeSchedule()
 			cycle -= tmp;
 			tmp = cycle / (totAdvertiser - i);
 			step = computePerformance(tmp, cycle, totAdvertiser - i);
-			cout<<"stepSize: "<<step<<"\tcycle: "<<cycle<<'\t'<<tmp<<endl;
+			//cout<<"stepSize: "<<step<<"\tcycle: "<<cycle<<'\t'<<tmp<<endl;
 		}
 		
 		//compute the assigned timeslot

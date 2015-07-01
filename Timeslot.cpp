@@ -328,6 +328,9 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 		 */
 		insertActive(asn);
 		
+		//if(asn%101 == 0)
+		//	cout<<asn<<" method: "<<method<<endl;
+		
 		/*
 		 * In every considered schemas the listener becomes active at a certain slot
 		 * and remain active on the same channel until a match is found
@@ -500,6 +503,8 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		{
 			double probCollision = it -> getVerticalCollision() / it -> getColliders();
 			
+			probCollision = probCollision / energyFactor; 
+			
 			/**
 			 * If there are more used cells than neighbours, so probCollision 
 			 * is higher than one, fix the collisionProbability a constant, if this
@@ -534,9 +539,9 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 				 * Control to avoid an always transmitting node.
 				 * NOTE: TRANSMISSIONFLAG is equal to 0, that's why this works
 				 */
-				if(it -> getColliders() == 1)
+				/*if(it -> getColliders() == 1)
 				{
-					if(it->generateNumber01(rand) < HIGHERPROB)
+					if(it->generateNumber01(rand) / energyFactor < HIGHERPROB)
 					{
 						genNumb = TRANSMISSIONFLAG;
 					}
@@ -545,12 +550,12 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 						genNumb = TRANSMISSIONFLAG + 1;
 					}
 				}
-				else
-					genNumb = it -> generateNumber(it -> getColliders(), rand);
+				else*/
+				genNumb = it -> generateNumber(it -> getColliders() * energyFactor, rand);
 			}
 		
 			else
-				genNumb = it -> generateNumber(COLLISIONRVRH, rand);
+				genNumb = it -> generateNumber(energyFactor, rand);
 			//cout << it -> getNodeID() << ": " << genNumb <<endl;
 			if(genNumb == (int)TRANSMISSIONFLAG)
 			{

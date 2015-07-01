@@ -21,6 +21,8 @@ class Timeslot{
 	int method;		//method used to compute the timeslot
 	double transmissionRange;
 	
+	double energyFactor;	//denominator only
+	
 	bool solveUniformCollisions();
 	bool solveDifferentCollisions(int*);
 	void eraseActive();	//erase the list of active nodes
@@ -37,4 +39,5 @@ public:
 	void setProbability(double);
 	bool addListener(listenerNode);
 	void setNodesCollisionProbability();
+	void setEnergyFactor(int e) {energyFactor = e;}
 };
