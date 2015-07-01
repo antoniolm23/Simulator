@@ -35,6 +35,7 @@ Timeslot::Timeslot(Random r, double ra, int lc)
 	listenerChannels = lc;
 	printProb = false;
 	listenersList = list<listenerNode>();
+	firstIt = false;
 }
 /*
  * Functions to insert a node in one of the lists
@@ -296,8 +297,20 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 	int tmpTransmittedEB = 0;
 	*transmittedEB = 0;
 	
+	/**
+	 * each listener selects its channel
+	 */
+	for(list<listenerNode>::iterator it = listenersList.begin(); 
+		it != listenersList.end(); ++it)
+	{
+		it -> channelUsed = rand.getNumber(listenerChannels) + CHSTART;
+	}
+	
 	unsigned int totListeners = listenersList.size();
 	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
+	if(firstIt == false)
+		selectListenersNeighbours();
+	
 	//for each node in the list checks how many colliders are there
 	
 	/*
@@ -394,6 +407,7 @@ void Timeslot::setProbability(double p)
  */
 bool Timeslot::addListener(listenerNode l)
 {
+	firstIt = false;
 	if(allowableListener(l) == true)
 	{
 		listenersList.push_back(l);
@@ -585,5 +599,25 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		return true;
 }
 
-
-
+/**
+ * For each listener counts the number of its neighbours
+ */
+void Timeslot::selectListenersNeighbours()
+{
+	firstIt = true;
+	for(list<listenerNode>::iterator it = listenersList.begin(); 
+		it != listenersList.end(); ++it)
+	{
+		int neighbours = 0;
+		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
+		{
+			int result = checkNeighbours(it->xPos, it->yPos, jt->getPosX(), 
+										 jt->getPosY(), transmissionRange);
+			if(result == INTXRANGE)
+				neighbours++;
+		}
+#ifdef DEBUG 
+		cout<<"Neighbours:\t"<<neighbours<<endl;
+#endif
+	}
+}

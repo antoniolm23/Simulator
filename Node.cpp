@@ -264,6 +264,7 @@ void advNode::setColliders(int c)
 		colliders = c;
 	else
 		colliders = 1;
-	
+#ifdef DEBUG
 	cout<<"Colliders:\t"<<colliders<<'\t'<<c<<endl;
+#endif
 }

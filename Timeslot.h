@@ -22,6 +22,7 @@ class Timeslot{
 	double transmissionRange;
 	
 	double energyFactor;	//denominator only
+	bool firstIt;
 	
 	bool solveUniformCollisions();
 	bool solveDifferentCollisions(int*);
@@ -29,6 +30,8 @@ class Timeslot{
 	void insertActive(int); //inserts active nodes in the list
 	int getRandomNumber(int, int);	//sets a new random number in listNode (only with TSCH random)
 	bool allowableListener(listenerNode);
+	
+	void selectListenersNeighbours();
 public:
 	Timeslot(Random, double, int); 
 	void addNode(advNode a);

@@ -64,45 +64,56 @@ bool search(position p, list<advNode> listAdv, int transmissionRange)
 position generatePosition(int squareSide, Random random, 
 						  list<advNode> listAdv, int transmissionRange)
 {
-	
+	//cout<<"Generate position"<<endl;
 	bool acceptable = false;
 	position p;
 	
 	//select an advertiser neighbour
-	int pos = random.getNumber(listAdv.size());
-	list<advNode>::iterator it = listAdv.begin();
-	for( int i = 0; i < pos; i++)
-		++it;
-	
-	int result = 0;
-	
-	bool acceptable = false;
-	while(!acceptable)
+	if(listAdv.size() != 0)
 	{
-		double x = it -> getPosX();
-		double y = it -> getPosY();
+		int pos = random.getNumber(listAdv.size());
+		list<advNode>::iterator it = listAdv.begin();
+		for( int i = 0; i < pos; i++)
+			++it;
 		
-		double a = random.getNumber01();
-		double b = random.getNumber01();
+		int result = 0;
 		
-		
-		if (b < a)
+		while(!acceptable)
 		{
-			double tmp = a;
-			a = b;
-			b = tmp;
+			double x = it -> getPosX();
+			double y = it -> getPosY();
+			
+			double a = random.getNumber01();
+			double b = random.getNumber01();
+			
+			
+			if (b < a)
+			{
+				double tmp = a;
+				a = b;
+				b = tmp;
+			}
+			
+			p.x = b * transmissionRange * cos(2 * M_PI * a /b) + x;
+			p.y = b * transmissionRange * sin(2 * M_PI * a / b) + y;
+			
+			result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
+			
+			if(result == INTXRANGE)
+			{
+				acceptable = true;
+			}
+			else
+			{
+				cout << "uncorrect\n";
+			}
 		}
-		
-		p.x = b * transmissionRange * cos(2 * M_PI * a /b) + x;
-		p.y = b * transmissionRange * sin(2 * M_PI * a / b) + y;
-		
-		result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
-		
-		if(result == INTXRANGE)
-		{
-			cout<<"correct"<<endl;
-			acceptable = true;
-		}
+	}
+	
+	if(listAdv.size() == 0)
+	{
+		p.x = random.getNumber01() * squareSide;
+		p.y = random.getNumber01() * squareSide;
 	}
 	//cout<<"Accepted1\t"<<p.x<<'\t'<<p.y<<'\n';
 	return p;
@@ -169,7 +180,7 @@ int main(int argc, char **argv)
 	string nameOfSchema = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
-	int energyFactor = 1;
+	int energyFactor = 2;
 	
 	//parsing passed parameters
     while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:")) != -1) 
@@ -250,7 +261,7 @@ int main(int argc, char **argv)
 		if(transmissionRange == 10)
 		{
 			if(numberAdvertisers == 5)
-				numberAdvertisingCells = 4;
+				numberAdvertisingCells = 3;
 			if(numberAdvertisers == 10)
 				numberAdvertisingCells = 5;
 			if(numberAdvertisers == 20)
@@ -364,7 +375,6 @@ int main(int argc, char **argv)
 				position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
 				listener.xPos = p.x;
 				listener.yPos = p.y;
-				listener.channelUsed = random.getNumber(listenerChannels) + CHSTART;
 				acceptable = timeslot.addListener(listener);
 			}
 		}

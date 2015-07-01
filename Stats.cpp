@@ -80,7 +80,7 @@ double Stat::computeMeanEBsent(int method)
 void Stat::print()
 {
 	ofstream myfile;
-	myfile.open("statistics.txt", ios::app);
+	myfile.open("tmp/statistics.txt", ios::app);
 	
 	//computeStatistic();
 	
