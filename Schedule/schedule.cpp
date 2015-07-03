@@ -35,8 +35,8 @@ ostream& operator<<(ostream& ios, const schedule& s)
 {
 	list<timeslot> l = s.scheduling;
 	list<timeslot>::iterator it;
-	//for( it = l.begin(); it != l.end(); ++it) 
-		//ios<<"timeslot: "<< it -> ts<<"\tchannel: "<<it->nc<<"\n";
+	for( it = l.begin(); it != l.end(); ++it) 
+		ios<<"timeslot: "<< it -> ts<<"\tchannel: "<<it->nc<<"\n";
 	return ios;
 }
 

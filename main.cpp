@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 		if(transmissionRange == 10)
 		{
 			if(numberAdvertisers == 5)
-				numberAdvertisingCells = 3;
+				numberAdvertisingCells = 4;
 			if(numberAdvertisers == 10)
 				numberAdvertisingCells = 5;
 			if(numberAdvertisers == 20)

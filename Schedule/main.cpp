@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	int timeslots = 3;		//# of timeslots
 	int numberChannels = 5;		//# of channels
 	int numberAdvertiser = 3;		//# of advertisers
-	int neighbours = 0;
+	int neighbours = 1;
 	double ploss = 0.0; //ploss probability
 	int energy = 1;
 	/*
@@ -56,10 +56,10 @@ int main(int argc, char **argv)
 		}
 	}
 	double tmpNeighbours = neighbours;
-	double avoidCollision = tmpNeighbours * (1/(tmpNeighbours * energy)) * 
-			pow( ((tmpNeighbours - 1)/(tmpNeighbours * energy)), neighbours - 1 ); 
-	ploss = 1 - (1 - avoidCollision) * (1 - ploss); 
-	cout<<avoidCollision<<endl;
+	double correctTransmission = tmpNeighbours * (1/ (tmpNeighbours * energy)) * 
+			pow( ((tmpNeighbours * energy - 1 )/(tmpNeighbours * energy)), neighbours - 1 ); 
+	ploss = 1 - (correctTransmission) * (1 - ploss); 
+	cout<<correctTransmission<<endl;
 	cout<<ploss<<endl;
 	schedule s(timeslots, numberChannels, numberAdvertiser);
 	s.computeSchedule();
