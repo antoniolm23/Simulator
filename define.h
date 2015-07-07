@@ -41,6 +41,8 @@
 #define AVAILABLEPOS 1
 #define ERROR -1
 
+#define METHODS 3
+
 /**
  * This struct represents the link used to do advertising
  * a link is a couple (timeslot, channelOffset) assigned.
@@ -69,7 +71,7 @@ struct listenerNode
 struct statStruct
 {
 	double EBsent;
-	int slotNumber;
+	unsigned int slotNumber;
 	int method;
 };
 

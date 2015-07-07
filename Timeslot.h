@@ -38,7 +38,7 @@ public:
 	bool compareChannel(int, listenerNode);
 	void print();
 	void erase();
-	int timeslotManager(int, double*);
+	void timeslotManager(statStruct*);
 	void setProbability(double);
 	bool addListener(listenerNode);
 	void setNodesCollisionProbability();

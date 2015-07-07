@@ -192,18 +192,19 @@ bool find(list<int> l, int t) {
  * @params: method used
  * @return: framselot elapsed
  */
-int Timeslot::timeslotManager(int m, double* transmittedEB)
+void Timeslot::timeslotManager(statStruct* stat)
 {
+	cout<<"hello\n";
 	unsigned int joinedSlotSum = 0;
 	
-	method = m;
+	method = stat->method;
 	unsigned int matchFound = 0;
 	asn = 0;
 	
 	int timeslotOn = 0;
 	
 	int tmpTransmittedEB = 0;
-	*transmittedEB = 0;
+	stat->EBsent = 0;
 	
 	unsigned int totListeners = listenersList.size();
 	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
@@ -251,7 +252,7 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 		if(activeNode.size() > 0)
 		{
 			transmitterPresent = solveDifferentCollisions(&tmpTransmittedEB);
-			*transmittedEB += tmpTransmittedEB;
+			stat->EBsent += tmpTransmittedEB;
 			//print();
 		}
 		
@@ -280,10 +281,11 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 	double slotframeElapsed = asn - timeslotOn;
 	//cout<<asn<<'\t'<<timeslotOn<<'\t'<<slotframeElapsed<<'\t'<<*transmittedEB<<endl;
 	slotframeElapsed = slotframeElapsed / N;	
-	*transmittedEB = *transmittedEB / slotframeElapsed;
+	stat->EBsent = stat->EBsent / slotframeElapsed;
 	//cout<< *transmittedEB << endl;
-	return joinedSlotSum;
-	
+	stat->slotNumber = joinedSlotSum;
+	cout<<"Method "<<method<<'\t'<<stat->EBsent<<'\t'<<stat->slotNumber<<endl;
+	//return joinedSlotSum;
 }
 
 /**

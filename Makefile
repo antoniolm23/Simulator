@@ -1,4 +1,4 @@
-CFLAGS 	:= -ggdb -Wall
+CFLAGS 	:= -ggdb -Wall -pthread
 CC := g++
 DEBUG ?= 
 

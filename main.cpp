@@ -9,8 +9,11 @@
 #include "parameters.h"
 #include "schedule.h"
 #include "define.h"
+#include <pthread.h>
 #include <sstream>
-
+#include <sys/wait.h>
+#include <sys/shm.h> 
+#include <sys/stat.h> 
 /**
  * Given cardinal position checks if two motes are or not neighbours
  * basing on the transmissionRange
@@ -187,6 +190,43 @@ int main(int argc, char **argv)
 	int energyFactor = 2;
 	int fair = 0;
 	
+	
+	//BEGIN SHARED MEMORY
+	/**
+	 * To use multiprocesses I need 3 parts of shared memory, one for each method
+	 * NOTE: my stands for my method, rv and wh for random vertical and random horizontal
+	 */ 
+	statStruct *myStat, *RVStat, *RHStat;
+	//myStat.method = OPTIMUM;
+	//RVStat.method = RANDOMVERTICAL;
+	//RHStat.method = RANDOMHORIZONTAL;
+	int MYSegmentId;
+	//shmid_ds myShmbuffer;
+	
+	int RVSegmentId;
+	//shmid_ds rvShmbuffer;
+	
+	int RHSegmentId;
+	//shmid_ds rhShmbuffer;
+	
+	//int mySegmentSize, rvSegmentSize, rhSegmentSize;
+	const int sharedSegmentSize = sizeof(statStruct);
+	
+	MYSegmentId = shmget(IPC_PRIVATE, sharedSegmentSize, 
+						 IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+	//attach the shared memory
+	myStat = (statStruct*) shmat(MYSegmentId, 0, 0);
+	
+	RVSegmentId = shmget(IPC_PRIVATE, sharedSegmentSize, 
+						 IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+	RVStat = (statStruct*) shmat(RVSegmentId, 0, 0);
+	
+	RHSegmentId = shmget(IPC_PRIVATE, sharedSegmentSize, 
+						 IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+	RHStat = (statStruct*) shmat(RHSegmentId, 0, 0);
+	
+	//END SHARED MEMORY
+	
 	//parsing passed parameters
     while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:f:")) != -1) 
 	{
@@ -244,8 +284,6 @@ int main(int argc, char **argv)
 				break;
 		}
 	}
-	
-	cout << energyFactor <<endl;
 	
 	/**
 	 * If the nubmer of advertising cells is not defined, select a number of advertising cells 
@@ -417,7 +455,7 @@ int main(int argc, char **argv)
 			cout<<"iteration: "<<c<<endl;
 			/*INITIALIZATION*/
 			//do the shuffling
-			if(fair == 1 && (c % 1000 == 0))
+			if(fair == 1 && (c % 1 == 0))
 			{
 				random_shuffle(tmpTimeslots, tmpTimeslots + N - 1);
 				random_shuffle(tmpChannels, tmpChannels + advertiserChannels - 1);
@@ -448,38 +486,181 @@ int main(int argc, char **argv)
 			*/
 			
 			//statistic for the optimum schema
-			statStruct stat;
+			/*
+			pthread_t threads[METHODS];
+			int rc;
+			void* status;
+			threadData td1, td2, td3;
 			if(ploss != 0)
 			{
-				stat.method = PLOSS_SCENARIO;
-				stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO, &(stat.EBsent));
+				myStat.method = PLOSS_SCENARIO;
+				td1.s = &myStat;
+				td1.t = &timeslot;
+				rc = pthread_create(&threads[0],NULL, &Timeslot::helperManager, (void*)&td1);
+				if(rc)
+				{
+					cout<<"thread not created\n";
+					exit(-1);
+				}
 			}
 			else
 			{
-				stat.method = OPTIMUM;
-				tmp = timeslot.timeslotManager(OPTIMUM, &(stat.EBsent));
-				stat.slotNumber = tmp;
-				//cout<<stat.slotNumber<<'\t';
-				
+				myStat.method = OPTIMUM;
+				td1.s = &myStat;
+				td1.t = &timeslot;
+				rc = pthread_create(&threads[0],NULL, &Timeslot::helperManager, (void*)&td1);
+				if(rc)
+				{
+					cout<<"thread not created\n";
+					exit(-1);
+				}
 			}
-			statistics.statInsert(stat);
 			
 			//statistic for randomhorizontal
-			stat.method = RANDOMHORIZONTAL;
-			tmp = timeslot.timeslotManager(RANDOMHORIZONTAL, &(stat.EBsent));
-			stat.slotNumber = tmp;
-			statistics.statInsert(stat);
-			//cout<<stat.EBsent<<'\t';
+			RHStat.method = RANDOMHORIZONTAL;
+			td2.s = &RHStat;
+			td2.t = &timeslot;
+			rc = pthread_create(&threads[1], NULL, &Timeslot::helperManager, (void*)&td2);
+			if(rc)
+			{
+				cout<<"thread not created\n";
+				exit(-1);
+			}
+			//wait for the thread to complete
 			
 			//statistic for randomvertical
-			stat.method = RANDOMVERTICAL;
-			tmp = timeslot.timeslotManager(RANDOMVERTICAL, &(stat.EBsent));
-			stat.slotNumber = tmp;
-			statistics.statInsert(stat);
-			//cout<<stat.slotNumber<<'\n';
+			RVStat.method = RANDOMVERTICAL;
+			td3.s = &RVStat;
+			td3.t = &timeslot;
+			rc = pthread_create(&threads[2], NULL, &Timeslot::helperManager, (void*)&td3);
+			if(rc)
+			{
+				cout<<"thread not created\n";
+				exit(-1);
+			}
+			//wait for the thread to complete
+			rc = pthread_join(threads[2], &status);
+			if(rc)
+			{
+				cout<<"Unable to join\n";
+				exit(-1);
+			}statistics.statInsert(RVStat);
+			cout<<"RV: "<<RVStat.slotNumber<<'\n';
 			//char t;
 			//cin>>t;
 			//cout<<"method computed"<<endl;
+			//wait for the thread to complete
+			rc = pthread_join(threads[0], &status);
+			if(rc)
+			{
+				cout<<"Unable to join\n";
+				exit(-1);
+			}
+			statistics.statInsert(myStat);
+			cout<<"MY: "<<myStat.slotNumber<<endl;
+			rc = pthread_join(threads[1], &status);
+			if(rc)
+			{
+				cout<<"Unable to join\n";
+				exit(-1);
+			}
+			statistics.statInsert(RHStat);
+			cout<<"RH: "<<RHStat.slotNumber<<'\n';
+			//cout<<stat.EBsent<<'\t';
+			*/
+			pid_t pid;
+			pid_t pids[METHODS];
+			for(int i = 0; i < METHODS; i++)
+			{
+				pid = fork();
+				if(pid == 0)
+				{
+					if(i == 0)
+					{
+						pids[i] = getpid();
+						myStat->EBsent = 0;
+						myStat->slotNumber = 0;
+						myStat->method = OPTIMUM;
+						statStruct tmpMy;
+						tmpMy.method = OPTIMUM;
+						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						for(int i = 0; i < 1000; i++)
+						{
+							timeslot.timeslotManager(&tmpMy);
+							myStat->EBsent += tmpMy.EBsent;
+							myStat->slotNumber += tmpMy.slotNumber;
+						}
+						cout<<"MY: "<<myStat->slotNumber<<'\n';
+						
+						return 0;
+					}
+					
+					if(i == 1)
+					{
+						pids[i] = getpid();
+						RHStat->EBsent = 0;
+						RHStat->slotNumber = 0;
+						RHStat->method = RANDOMHORIZONTAL;
+						statStruct tmpRH;
+						tmpRH.method = RANDOMHORIZONTAL;
+						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						for(int i = 0; i < 1000; i++)
+						{
+							timeslot.timeslotManager(&tmpRH);
+							RHStat->EBsent += tmpRH.EBsent;
+							RHStat->slotNumber += tmpRH.slotNumber;
+						}
+						cout<<"RH: "<<RHStat->slotNumber<<'\n';
+						//kill(pids[i], SIGTERM);
+						return 0;
+					}
+					
+					if(i == 2)
+					{
+						pids[i] = getpid();
+						RVStat->EBsent = 0;
+						RVStat->slotNumber = 0;
+						RVStat->method = RANDOMVERTICAL;
+						statStruct tmpRV;
+						tmpRV.method = RANDOMVERTICAL;
+						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						for(int i = 0; i < 1000; i++)
+						{
+							timeslot.timeslotManager(&tmpRV);
+							RVStat->EBsent += tmpRV.EBsent;
+							RVStat->slotNumber += tmpRV.slotNumber;
+						}
+						cout<<"RV: "<<RVStat->slotNumber<<'\n';
+						//kill(pids[i], SIGTERM);
+						return 0;
+					}
+				}
+				if(pid<0)
+				{
+					cout<<"fork failed\n";
+				}
+			}
+			if(pid > 0)
+			{
+				//wait for children processes to terminate
+				int returnStatus;
+				int exited = 0;
+				
+				while(exited < METHODS)
+				{
+					cout<<"exited\n";
+					while(waitpid(-1, &returnStatus, 0) == -1)
+					{
+						cout<<"blocked\n";
+					}
+					exited++;
+				}
+				
+				cout<<"children exited\n";
+				statistics.statInsert(*myStat);
+				statistics.statInsert(*RHStat);
+				statistics.statInsert(*RVStat);
+			}
 		}
 		
 	
@@ -491,12 +672,14 @@ int main(int argc, char **argv)
 		nameOfSchema = "adv" + convertInt(numberAdvertisers) + "sq" + convertInt(squareSide);
 	
 	//compute and print statistics
-	statistics.setTSIterations(iterations * numberListenerPositions * topologiesToGenerate);
-	statistics.setEBIterations(iterations * topologiesToGenerate);
+	statistics.setTSIterations(iterations * 1000 * numberListenerPositions * topologiesToGenerate);
+	statistics.setEBIterations(iterations * 1000 * topologiesToGenerate);
 	statistics.print(nameOfSchema, RANDOMHORIZONTAL);
 	statistics.print(nameOfSchema, RANDOMVERTICAL);
 	statistics.print(nameOfSchema, OPTIMUM);
 	delete tmpChannels;
 	delete channels;
+	
+	pthread_exit(NULL);
     return 0;
 }
