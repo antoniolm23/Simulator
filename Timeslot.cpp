@@ -153,22 +153,6 @@ void Timeslot::eraseActive()
 }
 
 
-/**
- * Function used when we use the TSCH Random Number Generator, to remember the 
- * fact that we have generated a number in the listNode too, in fact while 
- * activeNode is a temporary list, listNode is the definitive one.
- * @param: nodeId: the unique identifier for a node; size: the max dimension of the random number
- */
-int Timeslot::getRandomNumber(int nodeId, int size) {
-	
-	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it ) {
-		if(it -> getNodeID() == nodeId)
-			return it -> generateNumber(size, rand);
-	}
-	return -1;
-}
-
-
 //find if the max value available (size-1) is present in the list 
 int findMax(int* v, int size) 
 {
@@ -199,82 +183,6 @@ bool find(list<int> l, int t) {
 }
 
 /**
- * Try to solve a collision in the same timeslot if there are more then 
- * one node that want to transmitt
- * @return: true -> collision solved, false collision or colliding nodes are off
- */
-bool Timeslot::solveUniformCollisions()
-{
-	//cout<<"to solve collisons"<<endl;
-	
-	if(activeNode.size() < 2)
-		return true;
-	
-	int usedBy = 0;
-	list<int> tmpChannel;
-	list<advNode> colliding;
-	
-	bool collisionSolved = true;
-	
-	//check if the same channel is used by more than one node
-	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
-	{
-		
-		//if the channel is not already in the list then push it in the list
-		if(!find(tmpChannel, it->getAbsoluteChannel())) {
-			tmpChannel.push_back(it -> getAbsoluteChannel());
-			for( list<advNode>::iterator jt = it; jt != activeNode.end() ; ++jt ) 
-			{
-				//find how many nodes use the same channel
-				if(find(tmpChannel, jt -> getAbsoluteChannel())) 
-				{
-					usedBy++;
-					colliding.push_back(*jt);
-				}
-			}
-			
-			//if more than one node use the same channel then manage collisions
-			if(colliding.size() > 1) 
-			{
-				int size = colliding.size();
-				//cout<<"size is: "<<size<<endl;
-				int* genNumbers = new int[size];
-				int i = 0;
-				//cout<<"generatedNumbers:\t";
-				
-				//let each node generate a random number to handle collision
-				for( list<advNode>::iterator at = colliding.begin(); at != colliding.end(); ++at ) 
-				{
-					/*
-					 * to use the tsch random number generator, the rand class has to be null
-					 */
-					genNumbers[i] = getRandomNumber(at -> getNodeID(), size);
-					
-					//cout<<genNumbers[i]<<'\t';
-					i++;
-				}
-				//cout<<endl;
-				
-				//cout<<"result is: "<<findMax(genNumbers, size);
-				//see if the collision is solved or not
-				if(findMax(genNumbers, size)) 
-					collisionSolved = true;
-				else 
-				{
-					collisionSolved = collisionSolved & false;
-				}
-				delete genNumbers;
-			}
-			//erase all the list of colliding nodes to save resources
-			colliding.erase(colliding.begin(), colliding.end());
-		}
-	}
-	tmpChannel.erase(tmpChannel.begin(), tmpChannel.end());
-	//cout<<"collisionSolved? "<<collisionSolved<<endl;
-	return collisionSolved;
-}
-
-/**
  * Function that operates the most operations on a timeslot:
  * 1) arranges links in the timeslot
  * 2) checks wether or not channels are equal 
@@ -296,15 +204,6 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 	
 	int tmpTransmittedEB = 0;
 	*transmittedEB = 0;
-	
-	/**
-	 * each listener selects its channel
-	 */
-	for(list<listenerNode>::iterator it = listenersList.begin(); 
-		it != listenersList.end(); ++it)
-	{
-		it -> channelUsed = rand.getNumber(listenerChannels) + CHSTART;
-	}
 	
 	unsigned int totListeners = listenersList.size();
 	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
@@ -525,7 +424,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			 * number is higher than one this means that we have a very sparse topology,
 			 * to avoid locks, the constant is very high
 			 */
-			double generatedNumber01 = it -> generateNumber01(rand);
+			double generatedNumber01 = it -> generateNumber01();
 			//cout << probCollision << "\t" << generatedNumber01 << endl;
 			if(generatedNumber01 < probCollision)
 			{
@@ -547,29 +446,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		 */
 		else
 		{
-			if(method == OPTIMUM)
-			{
-				/**
-				 * Control to avoid an always transmitting node.
-				 * NOTE: TRANSMISSIONFLAG is equal to 0, that's why this works
-				 */
-				/*if(it -> getColliders() == 1)
-				{
-					if(it->generateNumber01(rand) / energyFactor < HIGHERPROB)
-					{
-						genNumb = TRANSMISSIONFLAG;
-					}
-					else
-					{
-						genNumb = TRANSMISSIONFLAG + 1;
-					}
-				}
-				else*/
-				genNumb = it -> generateNumber(it -> getColliders() * energyFactor, rand);
-			}
-		
-			else
-				genNumb = it -> generateNumber(energyFactor, rand);
+			genNumb = it -> generateNumberCollision(energyFactor, method);
 			//cout << it -> getNodeID() << ": " << genNumb <<endl;
 			if(genNumb == (int)TRANSMISSIONFLAG)
 			{
@@ -617,7 +494,34 @@ void Timeslot::selectListenersNeighbours()
 				neighbours++;
 		}
 #ifdef DEBUG 
-		cout<<"Neighbours:\t"<<neighbours<<endl;
+		//cout<<"Neighbours:\t"<<neighbours<<endl;
 #endif
 	}
 }
+
+void Timeslot::changeScheduling(map< int, list< int > > myAdv, 
+								int* timeslots, int* channelOffsets)
+{
+	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
+	{
+		it -> insertLinks(myAdv);
+		it -> initRandomAdvertising(RANDOMVERTICAL, channelOffsets);
+		it-> initRandomAdvertising(RANDOMHORIZONTAL, timeslots);
+	}
+}
+
+/**
+ * Each listener select its listening channel
+ */
+void Timeslot::setListeningChannels()
+{
+	/**
+	 * each listener selects its channel
+	 */
+	for(list<listenerNode>::iterator it = listenersList.begin(); 
+		it != listenersList.end(); ++it)
+	{
+		it -> channelUsed = rand.getNumber(listenerChannels) + CHSTART;
+	}
+}
+

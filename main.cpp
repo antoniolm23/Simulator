@@ -94,18 +94,22 @@ position generatePosition(int squareSide, Random random,
 				b = tmp;
 			}
 			
+			//generate a point in the circle
 			p.x = b * transmissionRange * cos(2 * M_PI * a /b) + x;
 			p.y = b * transmissionRange * sin(2 * M_PI * a / b) + y;
 			
-			result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
-			
-			if(result == INTXRANGE)
+			if(p.x > 0 && p.y > 0)
 			{
-				acceptable = true;
-			}
-			else
-			{
-				cout << "uncorrect\n";
+				result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
+				
+				if(result == INTXRANGE)
+				{
+					acceptable = true;
+				}
+				else
+				{
+					cout << "uncorrect\n";
+				}
 			}
 		}
 	}
@@ -181,9 +185,10 @@ int main(int argc, char **argv)
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
 	int energyFactor = 2;
+	int fair = 0;
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:f:")) != -1) 
 	{
 		switch(c)
 		{
@@ -230,6 +235,9 @@ int main(int argc, char **argv)
 				break;
 			case 'E':
 				energyFactor = atoi(optarg);
+				break;
+			case 'f':
+				fair = atoi(optarg);
 				break;
 			case '?':
 				cout<<optarg<<endl;
@@ -306,7 +314,7 @@ int main(int argc, char **argv)
 	Stat statistics;
 	
 	/**
-	 * If a configuration file is not used the program has to perform many things:
+	 * A configuration file is not used the program has to perform many things:
 	 * a) generate the optimal schema
 	 * b) generate nodes positions
 	 * c) generate listener position
@@ -317,6 +325,20 @@ int main(int argc, char **argv)
 	Schedule schedule = Schedule(N, advertiserChannels, numberAdvertisingCells);
 	advertisingCells = schedule.computeSchedule();
 	//cout << schedule << endl;
+	
+	int tmpTimeslots[N - 1];
+	int timeslots[N];
+		for(int i = 0; i < N - 1; i++)
+		{
+			int in = i+1;
+			tmpTimeslots[i] = in;
+		}
+		
+	int* tmpChannels = new int[advertiserChannels - 1];
+	int* channels = new int[advertiserChannels];
+	for(int i = 0; i < advertiserChannels; i++)
+		tmpChannels[i] = i;
+	
 	for(int j = 0; j < topologiesToGenerate; j++)
 	{
 		Timeslot timeslot = Timeslot(random, transmissionRange, listenerChannels);
@@ -330,6 +352,12 @@ int main(int argc, char **argv)
 		{
 			//set available channels
 			advNode node = advNode(advertiserChannels, transmissionRange);
+			node.setRandom(random);
+			
+			if(fair == 1)
+				node.setFairMethod(true);
+			else
+				node.setFairMethod(false);
 			
 			//insert link
 			node.insertLinks(advertisingCells);
@@ -352,10 +380,13 @@ int main(int argc, char **argv)
 			//set the id of the node
 			int id = i + 1;
 			node.setNodeID(id);
-		
-			//initialize the random advertising schemas
-			node.initRandomAdvertising(RANDOMHORIZONTAL, random);
-			node.initRandomAdvertising(RANDOMVERTICAL, random);
+			
+			if(fair == 0)
+			{
+				//initialize the random advertising schemas
+				node.initRandomAdvertising(RANDOMHORIZONTAL, NULL);
+				node.initRandomAdvertising(RANDOMVERTICAL, NULL);
+			}
 			
 			//insert nodes in lists
 			tmpAdvNodes.push_back(node);
@@ -383,6 +414,27 @@ int main(int argc, char **argv)
 		//timeslot.addListener(listener);
 		for(int c = 0; c < iterations; c++)
 		{
+			cout<<"iteration: "<<c<<endl;
+			/*INITIALIZATION*/
+			//do the shuffling
+			if(fair == 1 && (c % 1000 == 0))
+			{
+				random_shuffle(tmpTimeslots, tmpTimeslots + N - 1);
+				random_shuffle(tmpChannels, tmpChannels + advertiserChannels - 1);
+				
+				timeslots[0] = 0;
+				for(int i = 1; i < N; i++)
+					timeslots[i] = tmpTimeslots[i - 1];
+				
+				channels[0] = 0;
+				for(int i = 0; i < advertiserChannels; i++)
+					channels[i] = tmpChannels[i - 1];
+				
+				//at each iteration each node chooses the scheduling
+				timeslot.changeScheduling(advertisingCells, timeslots, channels);
+			}
+			timeslot.setListeningChannels();
+			
 			int tmp;
 			//char t;
 			//check if we need to add the probability
@@ -444,6 +496,7 @@ int main(int argc, char **argv)
 	statistics.print(nameOfSchema, RANDOMHORIZONTAL);
 	statistics.print(nameOfSchema, RANDOMVERTICAL);
 	statistics.print(nameOfSchema, OPTIMUM);
-	
+	delete tmpChannels;
+	delete channels;
     return 0;
 }

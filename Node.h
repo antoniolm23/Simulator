@@ -29,14 +29,19 @@ class advNode {
 	double radius;
 	bool synchronized;
 	
-	Random random;	
+	Random random;
 	
 	advLink randomHorizontal;
 	advLink randomVertical;
 	
 	bool transmittingState;
 	
+	bool fairMethod;
+	int availableCells;
+	
 	void setVerticalState(bool) {verticalState = true;};
+	
+	int getFair(int* );
 	
 public:
 	advNode(int ac, double);
@@ -45,7 +50,7 @@ public:
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
 	void insertLinks(map<int, list<int> >);
-	int generateNumber(int, Random);
+	int generateNumber(int);
 	int getAbsoluteChannel() { return absoluteChannel; }
 	void setNodeID(int);
 	void setPosition(position);
@@ -56,7 +61,7 @@ public:
 	double getPosY();
 	void setColliders(int c);
 	int getColliders() {return colliders;}
-	void initRandomAdvertising(int, Random);
+	void initRandomAdvertising(int, int*);
 	
 	//handling different collisions
 	void setTransmittingState(bool t) {transmittingState = t;}
@@ -65,6 +70,19 @@ public:
 	//handling vertical collision
 	bool getVerticalState() {return verticalState;}
 	double getVerticalCollision() {return verticalCollision;}
-	double generateNumber01(Random);
+	double generateNumber01();
+	
+	//set and get for fair fairMethod
+	/**
+	 * NOTE: in the fair method what happens is that 
+	 * each node selects just one cell amond a subset of available 
+	 * cells
+	 */
+	bool getFairMethod(){return fairMethod;};
+	void setFairMethod(bool f) {fairMethod = f;};
+	
+	void setRandom(Random r) {random = r;};
+	
+	int generateNumberCollision(int, int);
 	
 };

@@ -76,22 +76,6 @@ double Stat::computeMeanEBsent(int method)
 	ret = EBsentSum / EBiterations; 
 	return ret;
 }
-//prints the list of statistics on file
-void Stat::print()
-{
-	ofstream myfile;
-	myfile.open("tmp/statistics.txt", ios::app);
-	
-	//computeStatistic();
-	
-	for(list<statStruct>::iterator it = statsList.begin(); it != statsList.end(); ++it)
-	{
-		myfile<<"FrameslotNumber\t"<<it->slotNumber;//<<"\tfrequency:\t"<<it->frequency<<endl; 
-	}
-	
-	
-	myfile.close();
-}
 
 /**
  * print the statistic on the file, 

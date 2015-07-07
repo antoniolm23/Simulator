@@ -43,4 +43,8 @@ public:
 	bool addListener(listenerNode);
 	void setNodesCollisionProbability();
 	void setEnergyFactor(int e) {energyFactor = e;}
+	
+	void changeScheduling(map<int, list<int> >, int*, int*);
+	
+	void setListeningChannels();
 };

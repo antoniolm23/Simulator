@@ -103,9 +103,9 @@ int advNode::getChannelOffset(int timeslot, int method)
  * @return: generated number
  * TODO: add a way to choose between c++ random number generator and tsch one
  */
-int advNode::generateNumber(int max, Random r)
+int advNode::generateNumber(int max)
 {
-	return r.getNumber(max); 
+	return random.getNumber(max); 
 }
 
 void advNode::setNodeID(int id)
@@ -133,40 +133,69 @@ void advNode::setNodeID(int id)
  */
 void advNode::insertLinks(map< int, list<int> > scheduling)
 {
-	
-	advertisingLinks = map<int, list<int> >(scheduling);
-	
-	//check if this is a vertical scheduling
-	for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
+	/**
+	 * if we don't use a fair method, the node tries to transmitt in each of the 
+	 * available cells
+	 */
+	if(fairMethod == false)
 	{
-		if(it->second.size() > 1)
+		advertisingLinks = map<int, list<int> >(scheduling);
+		
+		//check if this is a vertical scheduling
+		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
 		{
-			verticalCollision = it->second.size();
-			setVerticalState(true);
-			return;
+			if(it->second.size() > 1)
+			{
+				verticalCollision = it->second.size();
+				setVerticalState(true);
+				return;
+			}
 		}
 	}
 	
-	/*//print to check correctness
-	cout<<"Original\n";
-	for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
+	/**
+	 * In this case the node has to pick just one cell and it
+	 * can transmitt only in this cell 
+	 */
+	if(fairMethod == true)
 	{
-		cout<<it->first<<'\t';
-		cout<<"Size: "<<it->second.size()<<endl;
-		for(list<int>::iterator jt = it->second.begin(); jt != it -> second.end(); ++jt)
-			cout<<*jt<<'\t';
-		cout<<endl;
+		advertisingLinks.clear();
+		
+		if(type == COORDINATOR)
+		{
+			advertisingLinks[0].push_back(0);
+			return;
+		}
+		advertisingLinks.clear();
+		int max = 0;
+		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
+		{
+			max += it -> second.size();
+		}
+		availableCells = max;
+		int cellIndex = generateNumber(max);
+//#ifdef DEBUG
+		cout<<"Availablecells: "<<availableCells<<'\t'<<cellIndex<<endl;
+//#endif
+		//go to the right index
+		int index = 0;
+		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
+		{
+			for(list<int>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt)
+			{
+				if(index < cellIndex)
+					index++;
+				else
+				{
+					advertisingLinks[it->first].push_back(*jt);
+//#ifdef DEBUG
+					cout<<"UsedCell: "<<it->first<<'\t'<<*jt<<endl;
+//#endif
+					return;
+				}
+			}
+		}
 	}
-	cout<<"Copy\t";
-	for(map<int, list<int> >::iterator it = advertisingLinks.begin(); 
-		it != advertisingLinks.end(); ++it )
-	{
-		cout<<it->first<<endl;
-		cout<<"Size: "<<it->second.size()<<endl;
-		for(list<int>::iterator jt = it->second.begin(); jt != it -> second.end(); ++jt)
-			cout<<*jt<<'\t';
-		cout<<endl;
-	}*/
 	
 }
 
@@ -193,7 +222,6 @@ void advNode::setPosition(position p)
 
 /**
  * If the advertiser is not synchronized has to wait for the first beacon to arrive
- * TODO PART
  */
 void advNode::setSynchronization(bool advertiserSynchronized)
 {
@@ -208,40 +236,85 @@ void advNode::setType(int t)
 /**
  * initialize the node advertising schema according to random horizontal or random vertical
  */
-void advNode::initRandomAdvertising(int method, Random r)
+void advNode::initRandomAdvertising(int method, int* vect)
 {
 	/*Initialization according to RandomHorizontal schema*/
-	if(method == RANDOMHORIZONTAL)
+	if(fairMethod == false || 
+		(availableCells >= availableChannels && method == RANDOMVERTICAL) 
+		|| availableCells >= N)
 	{
-		if(type == COORDINATOR)
+		if(method == RANDOMHORIZONTAL)
 		{
-			randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
-		}
-		else
-		{
-			//select a random timeslot
-			int timeslot = r.getNumber(N);
-			randomHorizontal.timeslot = timeslot;
-			randomHorizontal.channelOffset = 0;
+			if(type == COORDINATOR)
+			{
+				randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
+			}
+			else
+			{
+				//select a random timeslot
+				int timeslot = random.getNumber(N);
+				randomHorizontal.timeslot = timeslot;
+				randomHorizontal.channelOffset = 0;
+			}
+			
 		}
 		
+		/*initialization according to RandomVertical schema*/
+		if(method == RANDOMVERTICAL) 
+		{
+			if(type == COORDINATOR)
+			{
+				randomVertical.channelOffset = randomVertical.timeslot = 0;
+			}
+			else
+			{
+				int channelOffset = random.getNumber(availableChannels);
+				randomVertical.channelOffset = channelOffset;
+				randomVertical.timeslot = 0;
+			}
+			
+			//cout << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
+		}
 	}
 	
-	/*initialization according to RandomVertical schema*/
-	if(method == RANDOMVERTICAL) 
+	if(fairMethod == true)
 	{
-		if(type == COORDINATOR)
+		if(method == RANDOMHORIZONTAL)
 		{
-			randomVertical.channelOffset = randomVertical.timeslot = 0;
-		}
-		else
-		{
-			int channelOffset = r.getNumber(availableChannels);
-			randomVertical.channelOffset = channelOffset;
-			randomVertical.timeslot = 0;
+			if(type == COORDINATOR)
+			{
+				randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
+			}
+			else
+			{
+				
+				//select a random timeslot among a subset of available cells
+				int timeslot = getFair(vect);
+				randomHorizontal.timeslot = timeslot;
+				randomHorizontal.channelOffset = 0;
+			}
+//#ifdef DEBUG
+			cout << "RH: " << randomHorizontal.timeslot << '\t' << randomHorizontal.channelOffset << endl;
+//#endif
 		}
 		
-		//cout << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
+		/*initialization according to RandomVertical schema*/
+		if(method == RANDOMVERTICAL) 
+		{
+			if(type == COORDINATOR)
+			{
+				randomVertical.channelOffset = randomVertical.timeslot = 0;
+			}
+			else
+			{
+				int channelOffset = getFair(vect);
+				randomVertical.channelOffset = channelOffset;
+				randomVertical.timeslot = 0;
+			}
+//#ifdef DEBUG
+			cout << "RV: " << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
+//#endif
+		}
 	}
 }
 
@@ -250,7 +323,7 @@ void advNode::initRandomAdvertising(int method, Random r)
 /**
  * generate a random number between 0 and 1
  */
-double advNode::generateNumber01(Random random)
+double advNode::generateNumber01()
 {
 	return random.getNumber01();
 }
@@ -265,6 +338,31 @@ void advNode::setColliders(int c)
 	else
 		colliders = 1;
 #ifdef DEBUG
-	cout<<"Colliders:\t"<<colliders<<'\t'<<c<<endl;
+	//cout<<"Colliders:\t"<<colliders<<'\t'<<c<<endl;
 #endif
 }
+
+/**
+ * In case of fair method I have to select a cell among a subset of the available ones
+ * mixed by a shuffle method
+ * @param: array of mixed cell
+ * @return: the chosen one
+ */
+int advNode::getFair(int* vect)
+{
+	int index = random.getNumber(availableCells);
+	return vect[index];
+}
+
+/**
+ * generate a random number to avoid collision, the generated number depends on 
+ * a probability that is stated according to the method used (OPTIMUM, RV, RH..) 
+ * and basing on the fact that we're fair or not 
+ */
+int advNode::generateNumberCollision(int prob, int method)
+{
+	/*if(method == OPTIMUM && fairMethod == false)
+		prob = prob * getColliders(); */
+	return random.getNumber(prob);
+}
+

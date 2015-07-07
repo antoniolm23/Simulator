@@ -30,6 +30,5 @@ public:
 	void statInsert(statStruct);
 	void setTSIterations(int i) {TSiterations = i;}
 	void setEBIterations(int i) {EBiterations = i;}
-	void print();
 	void print(string t, int);
 };
