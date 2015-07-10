@@ -111,7 +111,7 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE))
 		{
 			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
-			if(it->getAbsoluteChannel() == listener.channelUsed)
+			if(it->getUsedChannel(timeslotOn, method) == listener.channelUsed)
 			{
 				correctTransmission++;
 			}
