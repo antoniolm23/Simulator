@@ -433,6 +433,7 @@ int main(int argc, char **argv)
 				//at each iteration each node chooses the scheduling
 				timeslot.changeScheduling(advertisingCells, timeslots, channels);
 			}
+			//channels are picked here!!!
 			timeslot.setListeningChannels();
 			
 			int tmp;
