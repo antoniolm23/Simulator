@@ -206,6 +206,7 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 	*transmittedEB = 0;
 	
 	unsigned int totListeners = listenersList.size();
+	setListeningChannels();
 	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
 	if(firstIt == false)
 		selectListenersNeighbours();
