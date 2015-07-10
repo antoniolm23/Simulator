@@ -98,6 +98,7 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 		
 	}
 	list<int> idTransmitters = list<int>();
+	
 	//scan all the list looking for a match
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
@@ -110,8 +111,9 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 			checkNeighbours(it->getPosX(), it->getPosY(), 
 			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE))
 		{
-			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
-			if(it->getAbsoluteChannel() == listener.channelUsed)
+			//absolute channel set when we perform the insertion
+			//cout<<"NodeId: "<<it->getNodeID()<<'\t'<<it->getUsedChannel()<<endl;
+			if(it->getUsedChannel(timeslotOn, method) == listener.channelUsed)
 			{
 				correctTransmission++;
 			}
@@ -194,7 +196,7 @@ bool find(list<int> l, int t) {
  */
 void Timeslot::timeslotManager(statStruct* stat)
 {
-	cout<<"hello\n";
+	//cout<<"hello\n";
 	unsigned int joinedSlotSum = 0;
 	
 	method = stat->method;
@@ -284,7 +286,7 @@ void Timeslot::timeslotManager(statStruct* stat)
 	stat->EBsent = stat->EBsent / slotframeElapsed;
 	//cout<< *transmittedEB << endl;
 	stat->slotNumber = joinedSlotSum;
-	cout<<"Method "<<method<<'\t'<<stat->EBsent<<'\t'<<stat->slotNumber<<endl;
+	//cout<<"Method "<<method<<'\t'<<stat->EBsent<<'\t'<<stat->slotNumber<<endl;
 	//return joinedSlotSum;
 }
 

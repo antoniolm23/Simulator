@@ -397,9 +397,6 @@ int main(int argc, char **argv)
 			else
 				node.setFairMethod(false);
 			
-			//insert link
-			node.insertLinks(advertisingCells);
-			
 			//generate node position, check if the position is already occupied
 			position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
 			node.setPosition(p);
@@ -424,6 +421,9 @@ int main(int argc, char **argv)
 				//initialize the random advertising schemas
 				node.initRandomAdvertising(RANDOMHORIZONTAL, NULL);
 				node.initRandomAdvertising(RANDOMVERTICAL, NULL);
+				//insert link
+				node.insertLinks(advertisingCells);
+			
 			}
 			
 			//insert nodes in lists
@@ -583,14 +583,14 @@ int main(int argc, char **argv)
 						myStat->method = OPTIMUM;
 						statStruct tmpMy;
 						tmpMy.method = OPTIMUM;
-						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						//printf("I am a child: %d PID: %d\n",i, pids[i]);
 						for(int i = 0; i < 1000; i++)
 						{
 							timeslot.timeslotManager(&tmpMy);
 							myStat->EBsent += tmpMy.EBsent;
 							myStat->slotNumber += tmpMy.slotNumber;
 						}
-						cout<<"MY: "<<myStat->slotNumber<<'\n';
+						//cout<<"MY: "<<myStat->slotNumber<<'\n';
 						
 						return 0;
 					}
@@ -603,14 +603,14 @@ int main(int argc, char **argv)
 						RHStat->method = RANDOMHORIZONTAL;
 						statStruct tmpRH;
 						tmpRH.method = RANDOMHORIZONTAL;
-						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						//printf("I am a child: %d PID: %d\n",i, pids[i]);
 						for(int i = 0; i < 1000; i++)
 						{
 							timeslot.timeslotManager(&tmpRH);
 							RHStat->EBsent += tmpRH.EBsent;
 							RHStat->slotNumber += tmpRH.slotNumber;
 						}
-						cout<<"RH: "<<RHStat->slotNumber<<'\n';
+						//cout<<"RH: "<<RHStat->slotNumber<<'\n';
 						//kill(pids[i], SIGTERM);
 						return 0;
 					}
@@ -623,14 +623,14 @@ int main(int argc, char **argv)
 						RVStat->method = RANDOMVERTICAL;
 						statStruct tmpRV;
 						tmpRV.method = RANDOMVERTICAL;
-						printf("I am a child: %d PID: %d\n",i, pids[i]);
+						//printf("I am a child: %d PID: %d\n",i, pids[i]);
 						for(int i = 0; i < 1000; i++)
 						{
 							timeslot.timeslotManager(&tmpRV);
 							RVStat->EBsent += tmpRV.EBsent;
 							RVStat->slotNumber += tmpRV.slotNumber;
 						}
-						cout<<"RV: "<<RVStat->slotNumber<<'\n';
+						//cout<<"RV: "<<RVStat->slotNumber<<'\n';
 						//kill(pids[i], SIGTERM);
 						return 0;
 					}
@@ -648,15 +648,11 @@ int main(int argc, char **argv)
 				
 				while(exited < METHODS)
 				{
-					cout<<"exited\n";
-					while(waitpid(-1, &returnStatus, 0) == -1)
-					{
-						cout<<"blocked\n";
-					}
-					exited++;
+					int pidExited = waitpid(-1, &returnStatus, 0);
+					if(pidExited == pids[0] || pidExited == pids[1] || pidExited == pids[2])
+						exited++;
 				}
 				
-				cout<<"children exited\n";
 				statistics.statInsert(*myStat);
 				statistics.statInsert(*RHStat);
 				statistics.statInsert(*RVStat);
