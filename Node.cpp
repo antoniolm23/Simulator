@@ -161,11 +161,11 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 	{
 		advertisingLinks.clear();
 		
-		if(type == COORDINATOR)
+		/*if(type == COORDINATOR)
 		{
 			advertisingLinks[0].push_back(0);
 			return;
-		}
+		}*/
 		advertisingLinks.clear();
 		int max = 0;
 		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
