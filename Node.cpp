@@ -11,6 +11,7 @@ advNode::advNode(int tc, double r)
 	radius = r;
 	verticalState = false;
 	transmittingState = false;
+	advertisingLinks = map<int, list<int> >();
 }
 
 /**
@@ -159,7 +160,7 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 	 */
 	if(fairMethod == true)
 	{
-		advertisingLinks.clear();
+		//advertisingLinks.clear();
 		
 		/*if(type == COORDINATOR)
 		{
@@ -174,9 +175,9 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 		}
 		availableCells = max;
 		int cellIndex = generateNumber(max);
-//#ifdef DEBUG
+#ifdef DEBUG
 		cout<<"Availablecells: "<<availableCells<<'\t'<<cellIndex<<endl;
-//#endif
+#endif
 		//go to the right index
 		int index = 0;
 		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
@@ -188,35 +189,14 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 				else
 				{
 					advertisingLinks[it->first].push_back(*jt);
-//#ifdef DEBUG
-					cout<<"UsedCell: "<<it->first<<'\t'<<*jt<<endl;
-//#endif
+#ifdef DEBUG
+// 					cout<<nodeId<<" UsedCell: "<<it->first<<'\t'<<*jt<<'\t'<<advertisingLinks.size()<<endl;
+#endif
 					return;
 				}
 			}
 		}
 	}
-	
-}
-
-//return single coordinates of the node position
-double advNode::getPosX()
-{
-	return pos.x;
-}
-double advNode::getPosY()
-{
-	return pos.y;
-}
-
-/**
- * Set the node position of the node
- * @param: postion of the node
- */
-void advNode::setPosition(position p)
-{
-	pos.x = p.x;
-	pos.y = p.y;
 	
 }
 
@@ -293,9 +273,9 @@ void advNode::initRandomAdvertising(int method, int* vect)
 				randomHorizontal.timeslot = timeslot;
 				randomHorizontal.channelOffset = 0;
 			}
-//#ifdef DEBUG
+#ifdef DEBUG
 			cout << "RH: " << randomHorizontal.timeslot << '\t' << randomHorizontal.channelOffset << endl;
-//#endif
+#endif
 		}
 		
 		/*initialization according to RandomVertical schema*/
@@ -311,9 +291,9 @@ void advNode::initRandomAdvertising(int method, int* vect)
 				randomVertical.channelOffset = channelOffset;
 				randomVertical.timeslot = 0;
 			}
-//#ifdef DEBUG
+#ifdef DEBUG
 			cout << "RV: " << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
-//#endif
+#endif
 		}
 	}
 }

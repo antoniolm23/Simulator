@@ -10,7 +10,7 @@
 #include <string>
 #include <list>
 #include <sstream>
-
+#include <map>
 using namespace std;
 
 /*
@@ -25,11 +25,12 @@ struct parameter{
 
 class parsing{
 	string filename;
-	list<parameter> parameterList;
+	//list<parameter> parameterList;
+	map<int, list<int> > schedule;
 	int parameterListSize;
 public:
-	parsing(string fname) { filename = fname; };
-	void doParsing() ;
+	parsing(string fname) { filename = fname; schedule = map<int, list<int> >(); };
+	map<int, list<int> > doParsing();
 	parameter getParameter() ;
 	int getParameterSize() ;
 };

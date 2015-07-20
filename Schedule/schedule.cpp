@@ -49,6 +49,7 @@ ostream& operator<<(ostream& ios, const schedule& s)
  */
 int schedule::computeTimeslot(int ti)
 {
+	//cout<<"Timselot"<<ti % totSlots<<endl;
 	return ti % totSlots;
 }
 
@@ -63,7 +64,10 @@ int schedule::computeChannelOffset(int ti)
 {
 	for(int j = 0; j < totChannel; j++) 
 		if(((ti + j) % totChannel) == PHYCHANNEL)
+		{
+			//cout<<"Channel Offset"<<j<<endl;
 			return j;
+		}
 	return -1;
 }
 
@@ -161,6 +165,7 @@ void schedule::computeSchedule()
 		//compute the assigned channel
 		t.nc = computeChannelOffset(distance);
 		
+		cout<<"Channel: "<<t.nc<<"\tTimeslot: "<<t.ts<<endl;
 		//insert the computed timeslot in the list
 		scheduling.push_back(t);
 		

@@ -3,7 +3,7 @@
 /*
  * LIST OF DEFINES
  */
-#define N 101			//number of timeslots in a slotframe
+#define N 23			//number of timeslots in a slotframe
 #define CHSTART	11	//starting channel to determine the actual channel to use
 //int he fixed schema nodes transmitt only in the first timeslot
 #define FIXEDSCHEMA 1

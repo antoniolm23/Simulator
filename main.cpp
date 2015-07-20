@@ -32,109 +32,6 @@
 	return ERROR;
 }*/
 
-
-bool search(position p, list<advNode> listAdv, int transmissionRange)
-{
-	bool inTxRange = false;
-	bool correct = false;
-	for(list<advNode>::iterator it = listAdv.begin(); it != listAdv.end(); ++it)
-	{
-		int result;
-		result = checkNeighbours(p.x, p.y, it->getPosX(), it -> getPosY(), transmissionRange);
-		//cout<<result<<'\n';
-		
-		if(result == INTXRANGE)
-			inTxRange = true;
-		if(result == AVAILABLEPOS)
-			correct = true;
-		if(result == OCCUPIED)
-			return false;
-		
-	}
-	if(inTxRange == true)
-	{
-		//cout<<"Accepted\n";
-		return true;
-	}
-	else
-		return false;
-}
-
-//utility function to generate positions of advertiser nodes
-position generatePosition(int squareSide, Random random, 
-						  list<advNode> listAdv, int transmissionRange)
-{
-	//cout<<"Generate position"<<endl;
-	bool acceptable = false;
-	position p;
-	
-	//select an advertiser neighbour
-	if(listAdv.size() != 0)
-	{
-		int pos = random.getNumber(listAdv.size());
-		list<advNode>::iterator it = listAdv.begin();
-		for( int i = 0; i < pos; i++)
-			++it;
-		
-		int result = 0;
-		
-		while(!acceptable)
-		{
-			double x = it -> getPosX();
-			double y = it -> getPosY();
-			
-			double a = random.getNumber01();
-			double b = random.getNumber01();
-			
-			
-			if (b < a)
-			{
-				double tmp = a;
-				a = b;
-				b = tmp;
-			}
-			
-			//generate a point in the circle
-			p.x = b * transmissionRange * cos(2 * M_PI * a /b) + x;
-			p.y = b * transmissionRange * sin(2 * M_PI * a / b) + y;
-			
-			if(p.x > 0 && p.y > 0)
-			{
-				result = checkNeighbours(p.x, p.y, x, y, transmissionRange);
-				
-				if(result == INTXRANGE)
-				{
-					acceptable = true;
-				}
-				else
-				{
-					cout << "uncorrect\n";
-				}
-			}
-		}
-	}
-	
-	if(listAdv.size() == 0)
-	{
-		p.x = random.getNumber01() * squareSide;
-		p.y = random.getNumber01() * squareSide;
-	}
-	//cout<<"Accepted1\t"<<p.x<<'\t'<<p.y<<'\n';
-	return p;
-}
-
-//writes the generated topology on a file
-void saveTopology(list<advNode> advNodes)
-{
-	ofstream file;
-	file.open("topology.txt", ios::app);
-	file << "****************\n";
-	for(list<advNode>::iterator it = advNodes.begin(); it != advNodes.end(); ++it)
-	{
-		file << it -> getPosX() << '\t' << it -> getPosY() << '\n';
-	}
-}
-
 /**
  * Convert an integer to string
  * @param: t is the integer to convert
@@ -161,10 +58,11 @@ string convertInt(int t)
  * -S square side
  * -T # of topologies to generate per # of schema
  * -y synchronization
- * -f configurationFile in order to enable the possibility of using a configuration file too
+ * -f fair method
  * -C advertising cells to be used
  * -P possible listener positions
  * -E energy factor
+ * -F configurationFile
  */
 int main(int argc, char **argv) 
 {
@@ -177,18 +75,20 @@ int main(int argc, char **argv)
 	int listenerChannels = 16;
 	int transmissionRange = 20;
 	int squareSide = 20;
-	int topologiesToGenerate = 50;
+	int topologiesToGenerate = 1;
 	int numberAdvertisers = 10;
 	bool advertiserSynchronized = true;
 	int numberAdvertisingCells = 0;
 	string nameOfSchema = "";
+	string fileName = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
 	int energyFactor = 2;
 	int fair = 0;
+	bool configurationFile = false; 
 	
 	//parsing passed parameters
-    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:f:")) != -1) 
+    while((c = getopt(argc, argv, "i:a:c:l:s:p:t:S:T:y:C:P:E:f:F:")) != -1) 
 	{
 		switch(c)
 		{
@@ -239,33 +139,36 @@ int main(int argc, char **argv)
 			case 'f':
 				fair = atoi(optarg);
 				break;
+			case 'F':
+				configurationFile = true;
+				fileName = optarg;
+				break;
 			case '?':
 				cout<<optarg<<endl;
 				break;
 		}
 	}
 	
-	cout << energyFactor <<endl;
-	
 	/**
 	 * If the nubmer of advertising cells is not defined, select a number of advertising cells 
 	 * according to nodes density
 	 */
+	/*
 	if(numberAdvertisingCells == 0)
 	{
 		double transmissionArea = pow(transmissionRange, 2) * M_PI;
 		double squareArea = pow(squareSide, 2);
 		double density = numberAdvertisers / squareArea;
-		cout << squareArea << '\t' << numberAdvertisers << '\t' << density <<endl;
+		//cout << squareArea << '\t' << numberAdvertisers << '\t' << density <<endl;
 		numberAdvertisingCells = (int) floor(transmissionArea * density);
 		
 		//error checking
-		/**
 		 * if(numberAdvertisingCells < 2)
 		 * numberAdvertisingCells = 2;
 		 * numberAdvertisingCells = numberAdvertisingCells + 1;
 		 */
 		//FIXME
+		/*
 		if(transmissionRange == 10)
 		{
 			if(numberAdvertisers == 5)
@@ -298,7 +201,7 @@ int main(int argc, char **argv)
 		
 		cout << "density: " << density << "\ttransmissionArea: " << transmissionArea 
 			<< "\tnumberAdvertisingCells: " << numberAdvertisingCells << endl;
-	}
+	}*/
 	if(listenerChannels > advertiserChannels)
 		listenerChannels = advertiserChannels;
 	//cout<<N<<endl;
@@ -322,17 +225,35 @@ int main(int argc, char **argv)
 	/*** a ***/
 	/*compute the list of advertising cells to be used*/
 	map<int, list<int> > advertisingCells = map<int, list<int> >();
-	Schedule schedule = Schedule(N, advertiserChannels, numberAdvertisingCells);
-	advertisingCells = schedule.computeSchedule();
+	
+	/*if I don't us a configuration file, let the schedule decide how to put the various cells*/
+	if(configurationFile == false)
+	{
+		Schedule schedule = Schedule(N, advertiserChannels, numberAdvertisingCells);
+		advertisingCells = schedule.computeSchedule();
+	}
+	
+	/**
+	 * If a configuration file is used, parse it and retrieve which is the proposed scheduling
+	 * algorithm
+	 */
+	else
+	{
+		//cout<<"parser"<<endl;
+		parsing parser = parsing("conf.txt");
+		advertisingCells = parser.doParsing();
+	}
 	//cout << schedule << endl;
+	
+	cout << energyFactor << '\t' << numberAdvertisingCells <<endl;
 	
 	int tmpTimeslots[N - 1];
 	int timeslots[N];
-		for(int i = 0; i < N - 1; i++)
-		{
-			int in = i+1;
-			tmpTimeslots[i] = in;
-		}
+	for(int i = 0; i < N - 1; i++)
+	{
+		int in = i + 1;
+		tmpTimeslots[i] = in;
+	}
 		
 	int* tmpChannels = new int[advertiserChannels - 1];
 	int* channels = new int[advertiserChannels];
@@ -345,7 +266,7 @@ int main(int argc, char **argv)
 		timeslot.setEnergyFactor(energyFactor);
 		listenerNode listener;
 	
-		cout << "step " << j << endl;
+		//cout << "step " << j << endl;
 		/*** b ***/
 		//generate advertisers
 		for(int i = 0; i < numberAdvertisers; i++)
@@ -363,8 +284,8 @@ int main(int argc, char **argv)
 			node.insertLinks(advertisingCells);
 			
 			//generate node position, check if the position is already occupied
-			position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
-			node.setPosition(p);
+			//position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
+			//node.setPosition(p);
 			
 			//cout << "Positions: " << p.x << "\t" << p.y << endl;
 			
@@ -393,7 +314,7 @@ int main(int argc, char **argv)
 			timeslot.addNode(node);
 		}
 		//saveTopology(advNodes);
-		timeslot.setNodesCollisionProbability();
+		//timeslot.setNodesCollisionProbability();
 		/*** c ***/
 		for(int lp = 0; lp < numberListenerPositions; lp++)
 		{
@@ -403,9 +324,9 @@ int main(int argc, char **argv)
 			while(!acceptable) 
 			{
 				//set listener properties except its channel 
-				position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
-				listener.xPos = p.x;
-				listener.yPos = p.y;
+				//position p = generatePosition(squareSide, random, tmpAdvNodes, transmissionRange);
+				//listener.xPos = p.x;
+				//listener.yPos = p.y;
 				acceptable = timeslot.addListener(listener);
 			}
 		}
@@ -414,10 +335,10 @@ int main(int argc, char **argv)
 		//timeslot.addListener(listener);
 		for(int c = 0; c < iterations; c++)
 		{
-			cout<<"iteration: "<<c<<endl;
+			//cout<<"iteration: "<<c<<endl;
 			/*INITIALIZATION*/
 			//do the shuffling
-			if(fair == 1 && (c % 1000 == 0))
+			if(fair == 1)
 			{
 				random_shuffle(tmpTimeslots, tmpTimeslots + N - 1);
 				random_shuffle(tmpChannels, tmpChannels + advertiserChannels - 1);
@@ -433,7 +354,8 @@ int main(int argc, char **argv)
 				//at each iteration each node chooses the scheduling
 				timeslot.changeScheduling(advertisingCells, timeslots, channels);
 			}
-			//channels are picked here!!!
+			
+			//NOTE listener channels are picked here!!!
 			timeslot.setListeningChannels();
 			
 			int tmp;
@@ -481,6 +403,7 @@ int main(int argc, char **argv)
 			//char t;
 			//cin>>t;
 			//cout<<"method computed"<<endl;
+			
 		}
 		
 	

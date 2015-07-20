@@ -25,7 +25,7 @@ class advNode {
 	bool verticalState;
 	double verticalCollision;
 	
-	position pos;		//position of the node
+	//position pos;		//position of the node
 	double radius;
 	bool synchronized;
 	
@@ -53,12 +53,12 @@ public:
 	int generateNumber(int);
 	int getAbsoluteChannel() { return absoluteChannel; }
 	void setNodeID(int);
-	void setPosition(position);
+	//void setPosition(position);
 	int getNodeID() { return nodeId; }
 	void setType(int);
 	void setSynchronization(bool );
-	double getPosX();
-	double getPosY();
+	//double getPosX();
+	//double getPosY();
 	void setColliders(int c);
 	int getColliders() {return colliders;}
 	void initRandomAdvertising(int, int*);

@@ -106,9 +106,9 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 		 * check if node is active and the listener is in its transmitting range
 		 * then check if the channel is correct
 		 */
-		if(it -> getTransmittingState() && (
+		if(it -> getTransmittingState()/* && (
 			checkNeighbours(it->getPosX(), it->getPosY(), 
-			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE))
+			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE)*/)
 		{
 			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
 			if(it->getUsedChannel(timeslotOn, method) == listener.channelUsed)
@@ -207,8 +207,6 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 	
 	unsigned int totListeners = listenersList.size();
 	list<listenerNode> tmpListenersList = list<listenerNode>(listenersList);
-	if(firstIt == false)
-		selectListenersNeighbours();
 	
 	//for each node in the list checks how many colliders are there
 	
@@ -270,14 +268,14 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 				it = tmpListenersList.erase(it);
 				
 				//insert statistic
-				joinedSlotSum += asn + 1 - timeslotOn + 1;
+				joinedSlotSum += asn + 1 - timeslotOn;
 				//cout << "joinedSum "<<joinedSlotSum<<endl ;
 			}
 		}
 		eraseActive();
 		asn++;
 	}
-	double slotframeElapsed = asn - timeslotOn;
+	double slotframeElapsed = asn + 1 - timeslotOn;
 	//cout<<asn<<'\t'<<timeslotOn<<'\t'<<slotframeElapsed<<'\t'<<*transmittedEB<<endl;
 	slotframeElapsed = slotframeElapsed / N;	
 	*transmittedEB = *transmittedEB / slotframeElapsed;
@@ -307,87 +305,8 @@ void Timeslot::setProbability(double p)
 bool Timeslot::addListener(listenerNode l)
 {
 	firstIt = false;
-	if(allowableListener(l) == true)
-	{
-		listenersList.push_back(l);
-		return true;
-	}
-	else
-		return false;
-}
-
-/**
- * function that checks if the listener node has at least one neighbour
- * then insert the neighbours in the list neighbours so that 
- * we reduce the number of nodes that need to be simulated
- * @param: listenerNode structure
- * @return: true if the listener can be in that position, false otherwise 
- */
-bool Timeslot::allowableListener(listenerNode listener)
-{
-	bool okPosition = false;
-	bool inTransmissionRange = false;
-	int result;
-	
-	//check compatibility with advertiser nodes
-	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++it)
-	{
-		result = checkNeighbours(listener.xPos, listener.yPos, it -> getPosX(), 
-								 it -> getPosY(), transmissionRange);
-		if(result == INTXRANGE)
-		{
-			inTransmissionRange = true;
-			okPosition = true;
-		}
-		if(result == AVAILABLEPOS)
-			okPosition = true;
-		if(result == OCCUPIED)
-			return false;
-		
-	}
-	
-	//check compatibility with other listener nodes
-	for(list<listenerNode>::iterator it = listenersList.begin(); 
-		it != listenersList.end(); ++it)
-	{
-		result = checkNeighbours(listener.xPos, listener.yPos, it -> xPos, 
-								 it -> yPos, transmissionRange);
-		if(result == INTXRANGE || AVAILABLEPOS)
-			okPosition = true;
-		if(result == OCCUPIED)
-			return false;
-	}
-	
-	if(okPosition == true && inTransmissionRange == true)
-	{
-		return true;
-	}
-	else
-		return false;
-}
-
-/**
- * For each nodes, counts the neighbours and sets the collision probability
- * Set also the IDs of the possible colliding nodes
- */
-void Timeslot::setNodesCollisionProbability()
-{
-	int result;
-	int collision = 0;
-	for(list<advNode>::iterator it = listNode.begin(); it != listNode.end(); ++ it) 
-	{
-		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
-		{
-			//computing distance between nodes
-			result = checkNeighbours(it -> getPosX(), it -> getPosY(), 
-				jt->getPosX(), jt->getPosY(), transmissionRange);
-			if(result == INTXRANGE || result == OCCUPIED)
-				collision++;
-		}
-		it -> setColliders(collision);
-		//cout << "Collision: " << it -> getNodeID() << " " << it -> getColliders() << endl;
-		collision = 0;
-	}
+	listenersList.push_back(l);
+	return true;
 }
 
 /**
@@ -412,7 +331,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 		 * the collisionProbability in this case is
 		 * N_cells / N_neighbours
 		 */
-		if(it -> getVerticalState() && method == OPTIMUM) 
+		/*if(it -> getVerticalState() && method == OPTIMUM) 
 		{
 			double probCollision = it -> getVerticalCollision() / it -> getColliders();
 			
@@ -423,7 +342,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			 * is higher than one, fix the collisionProbability a constant, if this
 			 * number is higher than one this means that we have a very sparse topology,
 			 * to avoid locks, the constant is very high
-			 */
+			 
 			double generatedNumber01 = it -> generateNumber01();
 			//cout << probCollision << "\t" << generatedNumber01 << endl;
 			if(generatedNumber01 < probCollision)
@@ -438,14 +357,14 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			}
 			
 			//usedChannels.push_back(it -> getAbsoluteChannel());
-		}
+		}*/
 		
 		/**
 		 * handle normal probability, when transmission probability
 		 * is related to the number of neighbours
 		 */
-		else
-		{
+		//else
+		//{
 			genNumb = it -> generateNumberCollision(energyFactor, method);
 			//cout << it -> getNodeID() << ": " << genNumb <<endl;
 			if(genNumb == (int)TRANSMISSIONFLAG)
@@ -459,7 +378,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			}
 			else
 				it -> setTransmittingState(false);
-		}
+		//}
 		
 	}
 	
@@ -477,28 +396,10 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 }
 
 /**
- * For each listener counts the number of its neighbours
+ * Since each node picks randomly a cell between all the available cells, 
+ * from time to time the node has to change cell
+ * @param: map of optimal scheduling, cells for RH. cells for RV
  */
-void Timeslot::selectListenersNeighbours()
-{
-	firstIt = true;
-	for(list<listenerNode>::iterator it = listenersList.begin(); 
-		it != listenersList.end(); ++it)
-	{
-		int neighbours = 0;
-		for(list<advNode>::iterator jt = listNode.begin(); jt != listNode.end(); ++jt)
-		{
-			int result = checkNeighbours(it->xPos, it->yPos, jt->getPosX(), 
-										 jt->getPosY(), transmissionRange);
-			if(result == INTXRANGE)
-				neighbours++;
-		}
-#ifdef DEBUG 
-		//cout<<"Neighbours:\t"<<neighbours<<endl;
-#endif
-	}
-}
-
 void Timeslot::changeScheduling(map< int, list< int > > myAdv, 
 								int* timeslots, int* channelOffsets)
 {
