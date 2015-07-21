@@ -338,11 +338,18 @@ int advNode::getFair(int* vect)
  * generate a random number to avoid collision, the generated number depends on 
  * a probability that is stated according to the method used (OPTIMUM, RV, RH..) 
  * and basing on the fact that we're fair or not 
+ * @param: transmission probability, method used
+ * @return: transmissionFlag or -1
  */
-int advNode::generateNumberCollision(int prob, int method)
+int advNode::generateNumberCollision(double prob, int method)
 {
 	/*if(method == OPTIMUM && fairMethod == false)
 		prob = prob * getColliders(); */
-	return random.getNumber(prob);
+	double generatedNumber = random.getNumber01();
+	//cout<<generatedNumber<<'\t'<<prob<<endl;
+	if(generatedNumber <= prob)
+		return TRANSMISSIONFLAG;
+	else
+		return -1;
 }
 

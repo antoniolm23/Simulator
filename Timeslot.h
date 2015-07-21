@@ -21,7 +21,7 @@ class Timeslot{
 	int method;		//method used to compute the timeslot
 	double transmissionRange;
 	
-	double energyFactor;	//denominator only
+	double energyFactor;
 	bool firstIt;
 	
 	bool solveUniformCollisions();
@@ -42,7 +42,7 @@ public:
 	void setProbability(double);
 	bool addListener(listenerNode);
 	void setNodesCollisionProbability();
-	void setEnergyFactor(int e) {energyFactor = e;}
+	void setEnergyFactor(double e) {energyFactor = e;}
 	
 	void changeScheduling(map<int, list<int> >, int*, int*);
 	

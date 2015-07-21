@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 	string fileName = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
-	int energyFactor = 2;
+	double energyFactor = 0.25;
 	int fair = 0;
 	bool configurationFile = false; 
 	
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 				numberListenerPositions = atoi(optarg);
 				break;
 			case 'E':
-				energyFactor = atoi(optarg);
+				energyFactor = atof(optarg);
 				break;
 			case 'f':
 				fair = atoi(optarg);
@@ -258,7 +258,10 @@ int main(int argc, char **argv)
 	int* tmpChannels = new int[advertiserChannels - 1];
 	int* channels = new int[advertiserChannels];
 	for(int i = 0; i < advertiserChannels; i++)
-		tmpChannels[i] = i;
+	{
+		int in = i + 1;
+		tmpChannels[i] = in;
+	}
 	
 	for(int j = 0; j < topologiesToGenerate; j++)
 	{

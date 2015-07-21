@@ -83,6 +83,6 @@ public:
 	
 	void setRandom(Random r) {random = r;};
 	
-	int generateNumberCollision(int, int);
+	int generateNumberCollision(double, int);
 	
 };

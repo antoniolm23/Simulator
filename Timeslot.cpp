@@ -337,7 +337,7 @@ bool Timeslot::solveDifferentCollisions(int* transmittedEB)
 			
 			probCollision = probCollision / energyFactor; 
 			
-			/**
+			
 			 * If there are more used cells than neighbours, so probCollision 
 			 * is higher than one, fix the collisionProbability a constant, if this
 			 * number is higher than one this means that we have a very sparse topology,
