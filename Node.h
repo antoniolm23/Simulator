@@ -31,8 +31,11 @@ class advNode {
 	
 	Random random;
 	
-	advLink randomHorizontal;
-	advLink randomVertical;
+	//list of timeslots at which an EB will be sent on channel 0
+	list<int> randomHorizontal;
+	
+	//list of channels at which at timeslot 0 an EB will be sent
+	list<int> randomVertical;
 	
 	bool transmittingState;
 	
@@ -45,8 +48,8 @@ class advNode {
 	
 public:
 	advNode(int ac, double);
-	int getUsedChannel(int, int);
-	int getChannelOffset(int, int);
+	list<int> getUsedChannel(int, int);
+	list<int> getChannelOffset(int, int);
 	void setState(bool s);
 	void insertLink(int chOff, int ts);
 	void insertLinks(map<int, list<int> >);

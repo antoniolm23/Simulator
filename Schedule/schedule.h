@@ -1,6 +1,12 @@
 #include <list>
 #include <iostream>
-
+#include <string>
+#include <map>
+#include <fstream>
+#include <sstream>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 using namespace std;
 /*
  * This is the schedule class used to compute the optimal 
@@ -23,12 +29,16 @@ class schedule
 	friend ostream& operator<<(ostream&, const schedule& );
 	double ploss;
 	
+	string filename;
 	int computeTimeslot(int);
 	int computeChannelOffset(int);
 	int computePerformance(int, int, int);
+	void saveOnFile(int, int);
 public:
 	schedule(int, int, int);
+	schedule(string, int, int);
 	void computeSchedule();
 	void evaluate();
 	void setPloss(double);
+	void retrieveSchedule();
 };

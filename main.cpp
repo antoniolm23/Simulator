@@ -149,59 +149,7 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	/**
-	 * If the nubmer of advertising cells is not defined, select a number of advertising cells 
-	 * according to nodes density
-	 */
-	/*
-	if(numberAdvertisingCells == 0)
-	{
-		double transmissionArea = pow(transmissionRange, 2) * M_PI;
-		double squareArea = pow(squareSide, 2);
-		double density = numberAdvertisers / squareArea;
-		//cout << squareArea << '\t' << numberAdvertisers << '\t' << density <<endl;
-		numberAdvertisingCells = (int) floor(transmissionArea * density);
-		
-		//error checking
-		 * if(numberAdvertisingCells < 2)
-		 * numberAdvertisingCells = 2;
-		 * numberAdvertisingCells = numberAdvertisingCells + 1;
-		 */
-		//FIXME
-		/*
-		if(transmissionRange == 10)
-		{
-			if(numberAdvertisers == 5)
-				numberAdvertisingCells = 4;
-			if(numberAdvertisers == 10)
-				numberAdvertisingCells = 5;
-			if(numberAdvertisers == 20)
-				numberAdvertisingCells = 7;
-			if(numberAdvertisers == 30)
-				numberAdvertisingCells = 8;
-			if(numberAdvertisers == 40)
-				numberAdvertisingCells = 9;
-			if(numberAdvertisers == 50)
-				numberAdvertisingCells = 10;
-			if(numberAdvertisers == 75)
-				numberAdvertisingCells = 12;
-			if(numberAdvertisers == 100)
-				numberAdvertisingCells = 14;
-			if(numberAdvertisers == 125)
-				numberAdvertisingCells = 16;
-			if(numberAdvertisers == 150)
-				numberAdvertisingCells = 19;
-			if(numberAdvertisers == 200)
-				numberAdvertisingCells = 24;
-			if(numberAdvertisers == 250)
-				numberAdvertisingCells = 29;
-		}
-		if(numberAdvertisingCells > 101)
-			numberAdvertisingCells = 101;
-		
-		cout << "density: " << density << "\ttransmissionArea: " << transmissionArea 
-			<< "\tnumberAdvertisingCells: " << numberAdvertisingCells << endl;
-	}*/
+	
 	if(listenerChannels > advertiserChannels)
 		listenerChannels = advertiserChannels;
 	//cout<<N<<endl;

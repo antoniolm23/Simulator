@@ -41,6 +41,10 @@
 #define AVAILABLEPOS 1
 #define ERROR -1
 
+
+#define RVSLOT 0
+#define RHCHANNEL 0
+
 /**
  * This struct represents the link used to do advertising
  * a link is a couple (timeslot, channelOffset) assigned.

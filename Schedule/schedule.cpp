@@ -1,5 +1,6 @@
 #include "schedule.h"
 #include <math.h>
+
 /*
  * the default channel on which we try to compute the scheduling
  * is the 0 one, by means of theory we know that the schema will 
@@ -49,7 +50,7 @@ ostream& operator<<(ostream& ios, const schedule& s)
  */
 int schedule::computeTimeslot(int ti)
 {
-	//cout<<"Timselot"<<ti % totSlots<<endl;
+	cout<<"Timselot"<<ti % totSlots<<endl;
 	return ti % totSlots;
 }
 
@@ -268,4 +269,60 @@ void schedule::evaluate()
 	}
 	cout<<"Fploss"<<ploss<<":\t"<<sum/tmp<<endl;
 }
+
+/**
+ * With a file configuration part
+ * @param: t is the filename
+ */
+schedule::schedule(string t, int ts, int ch)
+{
+	filename = t;
+	totSlots = ts;
+	totChannel = ch;
+}
+
+void schedule::retrieveSchedule()
+{
+	ifstream file;
+	file.open("conf.txt");
+	string line;
+	string distanceString;
+	int distanceInt, step = 0;
+	int timeslot, channelOffset;
+	//while there are lines in the file, read it and compute timeslot and channeloffset
+	while(getline(file, distanceString))
+	{
+		
+		//std::stringstream iss(line);
+		
+		
+		//if(getline(iss, distanceString, '\n'))
+		//{
+			distanceInt = atoi(distanceString.c_str());
+			cout<<distanceInt<<endl;
+			step += distanceInt;
+			cout<<step<<endl;
+			timeslot = computeTimeslot(step);
+			cout<<"timeslot: "<<timeslot<<endl;
+			channelOffset = computeChannelOffset(step);
+			cout<<"channel: "<<channelOffset<<endl;
+			saveOnFile(channelOffset, timeslot);
+			
+			cout<<timeslot<<'\t'<<channelOffset<<endl;
+		//}
+	}
+}
+
+/**
+ * Writes both integers on file
+ * @param: integers to write
+ */
+void schedule::saveOnFile(int c, int t)
+{
+	ofstream file;
+	file.open("../conf.txt", ios::app);
+	file<<"0\t"<<c<<'\t'<<t<<'\n';
+	file.close();
+}
+
 

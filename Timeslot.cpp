@@ -54,13 +54,14 @@ void Timeslot::addNode(advNode a)
  */
 void Timeslot::insertActive(int asn)
 {
-	int channelUsed;
+	list<int> channelUsed;
 	for( list<advNode>::iterator it = listNode.begin(); 
 		it != listNode.end(); ++it  )
 	{
 		//cout<<"ListNode: "<<it->getNodeID()<<": "<<it->getUsedChannel(asn)<<"\n";
 		//if node active then add a record in the list
-		if((channelUsed = it -> getUsedChannel(asn, method)) != -1) 
+		channelUsed = it -> getUsedChannel(asn, method);
+		if(channelUsed.size() > 0) 
 		{
 			
 			/*
@@ -97,7 +98,7 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 		return false;
 		
 	}
-	list<int> idTransmitters = list<int>();
+	list<int> usedChannels = list<int>();
 	//scan all the list looking for a match
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
@@ -106,16 +107,16 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 		 * check if node is active and the listener is in its transmitting range
 		 * then check if the channel is correct
 		 */
-		if(it -> getTransmittingState()/* && (
+		/*if(it -> getTransmittingState()/* && (
 			checkNeighbours(it->getPosX(), it->getPosY(), 
-			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE)*/)
-		{
+			listener.xPos, listener.yPos, transmissionRange) == INTXRANGE))*/
+		//{
 			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
-			if(it->getUsedChannel(timeslotOn, method) == listener.channelUsed)
-			{
-				correctTransmission++;
-			}
-		}
+			usedChannels = it->getUsedChannel(timeslotOn, method);
+			for(list<int>::iterator jt = usedChannels.begin(); jt != usedChannels.end(); ++jt)
+				if(*jt == listener.channelUsed)
+					correctTransmission++;
+		//}
 	}
 	
 	if(correctTransmission == 1)

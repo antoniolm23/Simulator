@@ -21,22 +21,28 @@ advNode::advNode(int tc, double r)
  * @param: AbsoluteSequenceNumber, method used
  * @return: the channel used if node active, -1 otherwise
  */
-int advNode::getUsedChannel(int asn, int method) 
+list<int> advNode::getUsedChannel(int asn, int method) 
 {
 	//determine timeslot number
 	int timeslot = asn % N;
 	
-	int chOff;
+	//list of channel offsets
+	list<int> chOff;
+	list<int> usedChannel = list<int>();
 	
-	//getState returns the channelOffset if node has a link in that timeslot, -1 otherwise
-	if((chOff = getChannelOffset(timeslot, method)) != -1) {
-		int usedChannel = CHSTART + ((asn + chOff) % availableChannels);
-		absoluteChannel = usedChannel;
+	chOff = getChannelOffset(timeslot, method);
+	
+	if(chOff.size() > 1) 
+	{
+		for(list<int>::iterator it = chOff.begin(); it != chOff.end(); ++it)
+		{
+			usedChannel.push_back(CHSTART + ((asn + *it)) % availableChannels);
+		}
 		return usedChannel;
 	}
 	
 	else
-		return -1;
+		return chOff;
 }
 
 
@@ -57,18 +63,24 @@ void advNode::setState(bool s)
  * @params: timeslot, the method used to transmitt EB
  * @return: channel offset if node is active, -1 otherwise
  */
-int advNode::getChannelOffset(int timeslot, int method) 
+list<int> advNode::getChannelOffset(int timeslot, int method) 
 {
+	list<int> tmp = list<int>();
 	if(method == RANDOMVERTICAL)
 	{
-		if(randomVertical.timeslot == timeslot)
-			return randomVertical.channelOffset;
+		if(timeslot == RVSLOT)
+			return randomVertical;
 	}
 	
 	if(method == RANDOMHORIZONTAL)
 	{
-		if(randomHorizontal.timeslot == timeslot)
-			return randomHorizontal.channelOffset;
+		list<int> retList = list<int>();
+		for(list<int>::iterator it = randomHorizontal.begin(); it != randomHorizontal.end(); ++it)
+		{
+			if(*it == timeslot)
+				retList.push_back(RHCHANNEL);
+		}
+		return retList;
 	}
 	
 	if(method == PLOSS_SCENARIO || method == OPTIMUM)
@@ -77,23 +89,10 @@ int advNode::getChannelOffset(int timeslot, int method)
 		it = advertisingLinks.find(timeslot);
 		if(it != advertisingLinks.end())
 		{
-			if( getVerticalState() )
-			{
-				//cout<<"getChannelOffset\n";
-				int pos = random.getNumber( it -> second.size() );
-				list<int>::iterator listIt = it -> second.begin();
-				for(int i = 0; i < pos; i++)
-				{
-					++listIt;
-				}
-				//cout <<nodeId<< ": ChannelOffset: " << *listIt << endl;
-				return *listIt;
-			}
-			else
-				return *it->second.begin();
+			return it->second;
 		}
 	}
-	return -1;
+	return tmp;
 }
 
 /**
@@ -141,17 +140,6 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 	if(fairMethod == false)
 	{
 		advertisingLinks = map<int, list<int> >(scheduling);
-		
-		//check if this is a vertical scheduling
-		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
-		{
-			if(it->second.size() > 1)
-			{
-				verticalCollision = it->second.size();
-				setVerticalState(true);
-				return;
-			}
-		}
 	}
 	
 	/**
@@ -219,81 +207,25 @@ void advNode::setType(int t)
 void advNode::initRandomAdvertising(int method, int* vect)
 {
 	/*Initialization according to RandomHorizontal schema*/
-	if(fairMethod == false || 
-		(availableCells >= availableChannels && method == RANDOMVERTICAL) 
-		|| availableCells >= N)
+	if(fairMethod == false)
 	{
 		if(method == RANDOMHORIZONTAL)
 		{
-			if(type == COORDINATOR)
-			{
-				randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
-			}
-			else
-			{
-				//select a random timeslot
-				int timeslot = random.getNumber(N);
-				randomHorizontal.timeslot = timeslot;
-				randomHorizontal.channelOffset = 0;
-			}
-			
+			for(int i = 0; i < availableCells; i++)
+				randomHorizontal.push_back(vect[i]);
 		}
 		
 		/*initialization according to RandomVertical schema*/
 		if(method == RANDOMVERTICAL) 
 		{
-			if(type == COORDINATOR)
-			{
-				randomVertical.channelOffset = randomVertical.timeslot = 0;
-			}
+			int stop;
+			if(availableCells > availableChannels)
+				stop = availableChannels;
 			else
-			{
-				int channelOffset = random.getNumber(availableChannels);
-				randomVertical.channelOffset = channelOffset;
-				randomVertical.timeslot = 0;
-			}
-			
+				stop = availableCells;
+			for(int i = 0; i < stop; i++)
+				randomVertical.push_back(vect[i]);
 			//cout << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
-		}
-	}
-	
-	if(fairMethod == true)
-	{
-		if(method == RANDOMHORIZONTAL)
-		{
-			if(type == COORDINATOR)
-			{
-				randomHorizontal.channelOffset = randomHorizontal.timeslot = 0;
-			}
-			else
-			{
-				
-				//select a random timeslot among a subset of available cells
-				int timeslot = getFair(vect);
-				randomHorizontal.timeslot = timeslot;
-				randomHorizontal.channelOffset = 0;
-			}
-#ifdef DEBUG
-			cout << "RH: " << randomHorizontal.timeslot << '\t' << randomHorizontal.channelOffset << endl;
-#endif
-		}
-		
-		/*initialization according to RandomVertical schema*/
-		if(method == RANDOMVERTICAL) 
-		{
-			if(type == COORDINATOR)
-			{
-				randomVertical.channelOffset = randomVertical.timeslot = 0;
-			}
-			else
-			{
-				int channelOffset = getFair(vect);
-				randomVertical.channelOffset = channelOffset;
-				randomVertical.timeslot = 0;
-			}
-#ifdef DEBUG
-			cout << "RV: " << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
-#endif
 		}
 	}
 }
