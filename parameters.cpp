@@ -8,7 +8,8 @@ map<int, list<int> > parsing::doParsing()
 	//open the file in read mode
 	ifstream file;
 	
-	file.open(filename.c_str());
+	file.open("conf.txt");
+	schedule.clear();
 	//cout<<filename.c_str()<<endl;
 	//temporary strings used to do the parsing
 	string tmpNodeID;
@@ -36,7 +37,7 @@ map<int, list<int> > parsing::doParsing()
 			p.nodeID = atoi(tmpNodeID.c_str());
 			p.chOff = atoi(tmpChOff.c_str());
 			p.timeslot = atoi(tmpTimeslot.c_str());
-			//cout<<"chOff: " <<p.chOff<<"\ttimeslot: "<<p.timeslot<<endl;
+			cout<<"chOff: " <<p.chOff<<"\ttimeslot: "<<p.timeslot<<endl;
 			schedule[p.timeslot].push_back(p.chOff);
 		}
 	}

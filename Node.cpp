@@ -12,6 +12,7 @@ advNode::advNode(int tc, double r)
 	verticalState = false;
 	transmittingState = false;
 	advertisingLinks = map<int, list<int> >();
+	fairMethod = false;
 }
 
 /**
@@ -25,18 +26,22 @@ list<int> advNode::getUsedChannel(int asn, int method)
 {
 	//determine timeslot number
 	int timeslot = asn % N;
-	
+	//cout<<"RElative timeslot "<<timeslot<<'\t'<<N<<endl;
 	//list of channel offsets
 	list<int> chOff;
 	list<int> usedChannel = list<int>();
 	
 	chOff = getChannelOffset(timeslot, method);
 	
-	if(chOff.size() > 1) 
+	//cout<<"Senders: "<<method<<'\t'<<chOff.size()<<endl;
+	
+	if(chOff.size() > 0) 
 	{
 		for(list<int>::iterator it = chOff.begin(); it != chOff.end(); ++it)
 		{
-			usedChannel.push_back(CHSTART + ((asn + *it)) % availableChannels);
+			int effectiveChannel = CHSTART + ((asn + *it)) % availableChannels;
+			//cout<<"usedChannel: "<<effectiveChannel<<endl;
+			usedChannel.push_back(effectiveChannel);
 		}
 		return usedChannel;
 	}
@@ -69,16 +74,24 @@ list<int> advNode::getChannelOffset(int timeslot, int method)
 	if(method == RANDOMVERTICAL)
 	{
 		if(timeslot == RVSLOT)
+		{
+			//cout<<"correct timeslot"<<endl;
 			return randomVertical;
+		}
 	}
 	
 	if(method == RANDOMHORIZONTAL)
 	{
 		list<int> retList = list<int>();
+		if(randomHorizontal.size() < 1)
+			cout<<"error\n";
 		for(list<int>::iterator it = randomHorizontal.begin(); it != randomHorizontal.end(); ++it)
 		{
 			if(*it == timeslot)
+			{
+				//cout<<"sending slot\n";
 				retList.push_back(RHCHANNEL);
+			}
 		}
 		return retList;
 	}
@@ -89,6 +102,7 @@ list<int> advNode::getChannelOffset(int timeslot, int method)
 		it = advertisingLinks.find(timeslot);
 		if(it != advertisingLinks.end())
 		{
+			//cout<<"channel found\n";
 			return it->second;
 		}
 	}
@@ -133,13 +147,18 @@ void advNode::setNodeID(int id)
  */
 void advNode::insertLinks(map< int, list<int> > scheduling)
 {
+	int max = 0;
 	/**
 	 * if we don't use a fair method, the node tries to transmitt in each of the 
 	 * available cells
 	 */
-	if(fairMethod == false)
+	advertisingLinks.clear();
+	//if(fairMethod == false);
+	if(1)
 	{
+		//cout<<"init advertising\n";
 		advertisingLinks = map<int, list<int> >(scheduling);
+		char t;
 	}
 	
 	/**
@@ -156,7 +175,6 @@ void advNode::insertLinks(map< int, list<int> > scheduling)
 			return;
 		}*/
 		advertisingLinks.clear();
-		int max = 0;
 		for(map<int, list<int> >::iterator it = scheduling.begin(); it != scheduling.end(); ++it )
 		{
 			max += it -> second.size();
@@ -207,17 +225,22 @@ void advNode::setType(int t)
 void advNode::initRandomAdvertising(int method, int* vect)
 {
 	/*Initialization according to RandomHorizontal schema*/
-	if(fairMethod == false)
-	{
 		if(method == RANDOMHORIZONTAL)
 		{
+			//cout<<"RH init "<<availableCells<<":\n";
+			randomHorizontal.clear();
 			for(int i = 0; i < availableCells; i++)
+			{
+				//cout<<vect[i]<<'\t';
 				randomHorizontal.push_back(vect[i]);
+			}
+			//cout<<endl;
 		}
 		
 		/*initialization according to RandomVertical schema*/
 		if(method == RANDOMVERTICAL) 
 		{
+			randomVertical.clear();
 			int stop;
 			if(availableCells > availableChannels)
 				stop = availableChannels;
@@ -227,7 +250,6 @@ void advNode::initRandomAdvertising(int method, int* vect)
 				randomVertical.push_back(vect[i]);
 			//cout << randomVertical.timeslot << '\t' << randomVertical.channelOffset << endl;
 		}
-	}
 }
 
 

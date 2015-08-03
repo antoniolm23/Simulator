@@ -63,22 +63,22 @@ void Timeslot::insertActive(int asn)
 		channelUsed = it -> getUsedChannel(asn, method);
 		if(channelUsed.size() > 0) 
 		{
-			
+			//cout<<"Active node"<<endl;
 			/*
 			 * if there is a certain ploss of losing the message, a node can be inserted in 
 			 * the list of active nodes according to that probability 
 			 * i.e. a node is active with probability 1 - ploss
 			 */
-			if(method == PLOSS_SCENARIO || ploss != 0) 
+			/*if( ploss != 0) 
 			{
 				//cout<<"ploss"<<endl;
 				double pActive = rand.getNumber01();
 				//cout<<pActive<<" VS "<<ploss<<endl;
 				if(pActive > ploss)
 					activeNode.push_back(*it);
-			}
+			}*/
 			
-			else 
+			//else 
 				activeNode.push_back(*it);
 			//cout<<"Active: "<<it->getNodeID()<<"\n";
 		}
@@ -91,7 +91,7 @@ void Timeslot::insertActive(int asn)
  */ 
 bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 {
-	
+	//cout<<"Active timeslot "<<timeslotOn % N<<endl;
 	int correctTransmission = 0;
 	if(asn < timeslotOn)
 	{
@@ -100,6 +100,10 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 	}
 	list<int> usedChannels = list<int>();
 	//scan all the list looking for a match
+	//if(activeNode.size() > 0)
+	//	cout<<"active node"<<endl;
+	//char t;
+	//cin>>t;
 	for( list<advNode>::iterator it = activeNode.begin(); it != activeNode.end(); ++it  )
 	{
 		//cout << it -> getNodeID() <<" ABS ch: " << it -> getAbsoluteChannel() << endl;
@@ -113,13 +117,29 @@ bool Timeslot::compareChannel(int timeslotOn, listenerNode listener)
 		//{
 			//cout<<it->getAbsoluteChannel()<<'\t'<<listener.channelUsed<<endl;
 			usedChannels = it->getUsedChannel(timeslotOn, method);
+			//cout<<"UsedChannels.size in compare channel: "<<usedChannels.size()<<endl;
 			for(list<int>::iterator jt = usedChannels.begin(); jt != usedChannels.end(); ++jt)
-				if(*jt == listener.channelUsed)
-					correctTransmission++;
+			{
+				//cout<<method<<": "<<*jt<<'\t'<<listener.channelUsed<<endl;
+				//cin>>t;
+				
+				//if there is ploss on a certain channel, then the EB may be corrupted
+				if(ploss != 0)
+				{
+					double pActive = rand.getNumber01();
+					cout<<pActive<<'\t'<<ploss<<endl;
+					if(pActive > ploss)
+					{
+						if(*jt == listener.channelUsed)
+							correctTransmission++;
+					}
+				}
+			}
 		//}
 	}
+	usedChannels.clear();
 	
-	if(correctTransmission == 1)
+	if(correctTransmission >= 1)
 	{
 		//cout<<"transmission"<<endl;
 		return true;
@@ -270,7 +290,7 @@ int Timeslot::timeslotManager(int m, double* transmittedEB)
 				
 				//insert statistic
 				joinedSlotSum += asn + 1 - timeslotOn;
-				//cout << "joinedSum "<<joinedSlotSum<<endl ;
+				cout <<method<<": "<< "joinedSum "<<joinedSlotSum<<endl ;
 			}
 		}
 		eraseActive();

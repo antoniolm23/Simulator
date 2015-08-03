@@ -88,4 +88,6 @@ public:
 	
 	int generateNumberCollision(double, int);
 	
+	void setAvailableCells(int ac) {availableCells = ac;};
+	
 };

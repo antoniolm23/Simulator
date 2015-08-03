@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 	string fileName = "";
 	double ploss = 0.0;
 	int numberListenerPositions = 10;
-	double energyFactor = 0.25;
+	double energyFactor = 1;
 	int fair = 0;
 	bool configurationFile = false; 
 	
@@ -129,6 +129,7 @@ int main(int argc, char **argv)
 				break;
 			case 'C':
 				numberAdvertisingCells = atoi(optarg);
+				cout<<numberAdvertisingCells<<endl;
 				break;
 			case 'P':
 				numberListenerPositions = atoi(optarg);
@@ -226,10 +227,10 @@ int main(int argc, char **argv)
 			advNode node = advNode(advertiserChannels, transmissionRange);
 			node.setRandom(random);
 			
-			if(fair == 1)
+			/*if(fair == 1)
 				node.setFairMethod(true);
 			else
-				node.setFairMethod(false);
+				node.setFairMethod(false);*/
 			
 			//insert link
 			node.insertLinks(advertisingCells);
@@ -252,13 +253,13 @@ int main(int argc, char **argv)
 			//set the id of the node
 			int id = i + 1;
 			node.setNodeID(id);
-			
-			if(fair == 0)
+			node.setAvailableCells(numberAdvertisingCells);
+			/*if(fair == 0)
 			{
 				//initialize the random advertising schemas
 				node.initRandomAdvertising(RANDOMHORIZONTAL, NULL);
 				node.initRandomAdvertising(RANDOMVERTICAL, NULL);
-			}
+			}*/
 			
 			//insert nodes in lists
 			tmpAdvNodes.push_back(node);
@@ -289,8 +290,8 @@ int main(int argc, char **argv)
 			//cout<<"iteration: "<<c<<endl;
 			/*INITIALIZATION*/
 			//do the shuffling
-			if(fair == 1)
-			{
+			//if(fair == 1)
+			//{
 				random_shuffle(tmpTimeslots, tmpTimeslots + N - 1);
 				random_shuffle(tmpChannels, tmpChannels + advertiserChannels - 1);
 				
@@ -304,7 +305,7 @@ int main(int argc, char **argv)
 				
 				//at each iteration each node chooses the scheduling
 				timeslot.changeScheduling(advertisingCells, timeslots, channels);
-			}
+			//}
 			
 			//NOTE listener channels are picked here!!!
 			timeslot.setListeningChannels();
@@ -323,19 +324,19 @@ int main(int argc, char **argv)
 			
 			//statistic for the optimum schema
 			statStruct stat;
-			if(ploss != 0)
+			/*if(ploss != 0)
 			{
 				stat.method = PLOSS_SCENARIO;
 				stat.slotNumber = timeslot.timeslotManager(PLOSS_SCENARIO, &(stat.EBsent));
 			}
 			else
-			{
+			{*/
 				stat.method = OPTIMUM;
 				tmp = timeslot.timeslotManager(OPTIMUM, &(stat.EBsent));
 				stat.slotNumber = tmp;
 				//cout<<stat.slotNumber<<'\t';
 				
-			}
+			//}
 			statistics.statInsert(stat);
 			
 			//statistic for randomhorizontal

@@ -91,14 +91,14 @@ void Stat::print(string schema, int method)
 	double meanSlotNumber = computeMeanSlotNumber(method);
 	double confidenceIntervalSlotNumber = computeConfidenceIntervalSlotNumber(method, meanSlotNumber);
 	
-	double meanEBsent = computeMeanEBsent(method);
-	double confidenceIntervalEBsent = computeConfidenceIntervalEBsent(method, meanEBsent);
+	//double meanEBsent = computeMeanEBsent(method);
+	//double confidenceIntervalEBsent = computeConfidenceIntervalEBsent(method, meanEBsent);
 	myfile<<schema<<":\tMethod:\t"<<method<<"\tAvg:\t"<<meanSlotNumber
 		<<"\tCI:\t"<<meanSlotNumber + confidenceIntervalSlotNumber<<'\t'
-		<<meanSlotNumber - confidenceIntervalSlotNumber
-		<<"\tAVGEB:\t"<<meanEBsent<<"\tCIEBsent:\t"<<
+		<<meanSlotNumber - confidenceIntervalSlotNumber<<'\n';
+		/*<<"\tAVGEB:\t"<<meanEBsent<<"\tCIEBsent:\t"<<
 		meanEBsent + confidenceIntervalEBsent<<'\t'<<
-		meanEBsent - confidenceIntervalEBsent<<endl; 
+		meanEBsent - confidenceIntervalEBsent<<endl;*/ 
 	
 	myfile.close();
 }
